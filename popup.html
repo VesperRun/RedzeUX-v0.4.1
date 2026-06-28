@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Redze UX</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <main class="popup">
+      <header class="popup-header">
+        <h1>Redze UX</h1>
+        <p>Competitive UX snapshots in 2 minutes — local only.</p>
+        <p id="tier-status" class="premium-note"></p>
+      </header>
+
+      <section class="card">
+        <button id="open-panel" class="btn primary">Open Panel</button>
+        <button id="analyze-current" class="btn">Analyze This Page</button>
+        <p id="status-line" class="premium-note">RedzeUX suggests. You synthesize. You decide.</p>
+      </section>
+
+      <section class="card compact">
+        <p class="premium-note">
+          <strong>Free:</strong> analyze + pattern readout + 3 brief copies/day.<br />
+          <strong>Pro:</strong> compare sites, unlimited briefs, optional BYOK AI.
+        </p>
+        <button id="open-options" class="btn">Options &amp; Pro</button>
+      </section>
+
+      <footer class="popup-footer">For the people · Local only · Always.</footer>
+    </main>
+    <script src="entitlements.js"></script>
+    <script src="popup.js"></script>
+  </body>
+</html>

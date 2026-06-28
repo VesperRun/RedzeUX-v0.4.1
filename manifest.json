@@ -1,0 +1,50 @@
+{
+  "manifest_version": 3,
+  "name": "Redze UX - Privacy-First UX Snapshots",
+  "description": "Local-first competitive UX snapshots and paste-ready briefs from visible page UI — advisory, not verdicts.",
+  "version": "0.4.0",
+  "action": {
+    "default_title": "Redze UX",
+    "default_popup": "popup.html"
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "background": {
+    "service_worker": "service_worker.js",
+    "type": "module"
+  },
+  "permissions": ["storage", "activeTab", "tabs", "scripting"],
+  "host_permissions": ["<all_urls>"],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": [
+        "feature-taxonomy.js",
+        "dom-detector.js",
+        "heuristic-engine.js",
+        "ai-wrapper.js",
+        "comparison-manager.js",
+        "brief-builder.js",
+        "entitlements.js",
+        "export-report.js",
+        "floating-panel.js",
+        "content.js"
+      ],
+      "css": ["floating-panel.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["floating-panel.css"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

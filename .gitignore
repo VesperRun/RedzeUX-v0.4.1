@@ -1,0 +1,7 @@
+.DS_Store
+Thumbs.db
+*.log
+.env
+stripe/.env
+stripe/licenses.json
+stripe/node_modules/

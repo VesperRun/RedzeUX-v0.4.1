@@ -1,0 +1,147 @@
+body {
+  margin: 0;
+  font-family: Inter, Segoe UI, Roboto, Arial, sans-serif;
+  background: #0f1629;
+  color: #eef2ff;
+}
+
+.popup {
+  width: 340px;
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+.popup-header h1 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.popup-header p {
+  margin: 4px 0 12px;
+  font-size: 12px;
+  color: #c6d2ff;
+}
+
+.card {
+  background: #1a2340;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.card h2 {
+  margin: 0 0 8px;
+  font-size: 14px;
+}
+
+label {
+  display: block;
+  font-size: 12px;
+  margin: 6px 0 4px;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+input[type='url'],
+input[type='password'] {
+  width: 100%;
+  box-sizing: border-box;
+  border-radius: 8px;
+  border: 0;
+  padding: 8px;
+  margin-bottom: 8px;
+}
+
+.btn {
+  width: 100%;
+  border: 0;
+  border-radius: 8px;
+  padding: 8px;
+  cursor: pointer;
+  margin-top: 6px;
+  background: #2b396b;
+  color: #ffffff;
+  transition: transform 0.12s ease, background 0.12s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  background: #354a88;
+}
+
+.btn.primary {
+  background: #768cff;
+  font-weight: 600;
+}
+
+#result-box {
+  min-height: 70px;
+  max-height: 150px;
+  overflow: auto;
+  background: #111936;
+  border-radius: 8px;
+  padding: 8px;
+  white-space: pre-wrap;
+  font-size: 11px;
+  color: #d7e2ff;
+}
+
+.comparison-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.comparison-col {
+  background: #111936;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 8px;
+  font-size: 11px;
+}
+
+.comparison-col h3 {
+  margin: 0 0 6px;
+  font-size: 11px;
+  color: #cbd8ff;
+}
+
+.comparison-col h3 .site-index {
+  display: inline-block;
+  margin-right: 6px;
+  color: #9fb0ff;
+}
+
+.comparison-col ul {
+  margin: 0;
+  padding-left: 14px;
+}
+
+.premium-note {
+  margin: 8px 0 0;
+  font-size: 11px;
+  color: #cfd8ff;
+  opacity: 0.88;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.popup-footer {
+  margin-top: 8px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: #7ad3a5;
+}
+
+.card.compact {
+  padding: 8px 10px;
+}

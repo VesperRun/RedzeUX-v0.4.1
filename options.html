@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Redze UX Options</title>
+    <link rel="stylesheet" href="options.css" />
+  </head>
+  <body>
+    <main class="options">
+      <header>
+        <h1>Redze UX</h1>
+        <p class="tagline">Competitive UX snapshots in 2 minutes — from the live page, local only.</p>
+        <p id="tier-status" class="tier-status">Loading tier…</p>
+      </header>
+
+      <section class="card">
+        <h2>Pro — Teardown</h2>
+        <p class="hint">
+          Unlimited executive briefs · compare up to 5 sites · compare brief · optional BYOK AI.
+          Billed via <strong>Stripe</strong> (~$19–29/mo — set your Payment Link in <code>billing-config.js</code>).
+        </p>
+        <button id="upgrade-stripe" class="btn primary">Upgrade with Stripe</button>
+        <p id="stripe-hint" class="hint hidden">Add your Payment Link URL to <code>billing-config.js</code>, then reload the extension.</p>
+        <label for="license-key">License key</label>
+        <input id="license-key" type="text" autocomplete="off" placeholder="RZX-PRO-XXXXXXXXXXXX" />
+        <div class="btn-row">
+          <button id="save-license" class="btn">Save &amp; verify key</button>
+          <button id="verify-license" class="btn">Re-verify</button>
+        </div>
+        <button id="manage-billing" class="btn hidden">Manage subscription (Stripe)</button>
+        <p id="license-message" class="message" aria-live="polite"></p>
+      </section>
+
+      <section class="card">
+        <h2>Report branding (Pro export)</h2>
+        <p class="hint">Used on .md, .txt, and print/PDF client exports from the floating panel.</p>
+        <label for="brand-agency">Agency / studio name</label>
+        <input id="brand-agency" type="text" placeholder="Redze UX" />
+        <label for="brand-prepared">Prepared for (client name)</label>
+        <input id="brand-prepared" type="text" placeholder="Acme Corp" />
+        <button id="save-brand" class="btn">Save branding</button>
+        <p id="brand-message" class="message" aria-live="polite"></p>
+      </section>
+
+      <section class="card">
+        <h2>Optional remote AI (Pro + BYOK)</h2>
+        <p class="hint">Sends a structured summary only — never raw DOM. Local suggestions always work without this.</p>
+        <label class="row">
+          <span>Enable remote AI</span>
+          <input id="ai-enabled" type="checkbox" />
+        </label>
+        <label for="ai-endpoint">Endpoint URL</label>
+        <input id="ai-endpoint" type="url" placeholder="https://api.example.com/v1/suggest" />
+        <label for="ai-api-key">API key</label>
+        <input id="ai-api-key" type="password" autocomplete="off" placeholder="Bearer key" />
+        <button id="save-ai" class="btn">Save AI settings</button>
+        <p id="ai-message" class="message" aria-live="polite"></p>
+      </section>
+
+      <section class="card doctrine">
+        <h2>Doctrine</h2>
+        <ul>
+          <li>RedzeUX <strong>suggests</strong>. You synthesize. You decide.</li>
+          <li>Visible UI only — advisory confidence, not verdicts.</li>
+          <li>No accounts. No telemetry. Keys stay in <code>chrome.storage.local</code>.</li>
+        </ul>
+        <p class="footer-truth">For the people · Local only · Always.</p>
+        <p class="fine">Allowances: <code>ALLOWANCES-LOG.md</code> · Philosophia Vesperi</p>
+      </section>
+    </main>
+    <script src="billing-config.js"></script>
+    <script src="entitlements.js"></script>
+    <script src="export-report.js"></script>
+    <script src="options.js"></script>
+  </body>
+</html>
