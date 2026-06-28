@@ -10,31 +10,49 @@
     <main class="options">
       <header>
         <h1>Redze UX</h1>
-        <p class="tagline">Competitive UX snapshots in 2 minutes — from the live page, local only.</p>
+        <p class="tagline">Hybrid lanes — Free · Pro · Agency. Local only.</p>
         <p id="tier-status" class="tier-status">Loading tier…</p>
       </header>
 
+      <section class="card" id="hybrid-lanes">
+        <h2>Hybrid pricing</h2>
+        <ul id="lane-list" class="lane-list"></ul>
+        <p class="fine">Full detail: <code>PRICING.md</code> · <code>HYBRID-SCHEMA.md</code></p>
+      </section>
+
       <section class="card">
-        <h2>Pro — Teardown</h2>
-        <p class="hint">
-          Unlimited executive briefs · compare up to 5 sites · compare brief · optional BYOK AI.
-          Billed via <strong>Stripe</strong> (~$19–29/mo — set your Payment Link in <code>billing-config.js</code>).
-        </p>
+        <h2>Pro — Teardown ($24/mo · $199/yr)</h2>
+        <p class="hint">Self-serve Stripe subscription. Unlimited briefs, compare, exports, BYOK AI.</p>
         <button id="upgrade-stripe" class="btn primary">Upgrade with Stripe</button>
-        <p id="stripe-hint" class="hint hidden">Add your Payment Link URL to <code>billing-config.js</code>, then reload the extension.</p>
+        <p id="stripe-hint" class="hint hidden">Set <code>stripePaymentLink</code> in <code>billing-config.js</code>.</p>
+        <button id="manage-billing" class="btn hidden">Manage subscription (Stripe)</button>
+      </section>
+
+      <section class="card">
+        <h2>License key (Pro or Agency)</h2>
+        <p class="hint">
+          <strong>Pro:</strong> <code>RZX-PRO-…</code> from checkout email.<br />
+          <strong>Agency:</strong> <code>RZX-AGENCY-…</code> from kit sale · see <code>agency/KIT.md</code>
+        </p>
         <label for="license-key">License key</label>
-        <input id="license-key" type="text" autocomplete="off" placeholder="RZX-PRO-XXXXXXXXXXXX" />
+        <input id="license-key" type="text" autocomplete="off" placeholder="RZX-PRO-… or RZX-AGENCY-…" />
         <div class="btn-row">
           <button id="save-license" class="btn">Save &amp; verify key</button>
           <button id="verify-license" class="btn">Re-verify</button>
         </div>
-        <button id="manage-billing" class="btn hidden">Manage subscription (Stripe)</button>
         <p id="license-message" class="message" aria-live="polite"></p>
       </section>
 
       <section class="card">
-        <h2>Report branding (Pro export)</h2>
-        <p class="hint">Used on .md, .txt, and print/PDF client exports from the floating panel.</p>
+        <h2>Agency — Kit ($1,299 + $299/yr maintenance)</h2>
+        <p class="hint">White-label extension + self-hosted server. Sold manually.</p>
+        <p id="agency-contact" class="hint"></p>
+        <button id="open-agency-kit" class="btn">Open agency/KIT.md</button>
+      </section>
+
+      <section class="card">
+        <h2>Report branding (Pro + Agency export)</h2>
+        <p class="hint">Used on .md, .txt, and print/PDF exports from the floating panel.</p>
         <label for="brand-agency">Agency / studio name</label>
         <input id="brand-agency" type="text" placeholder="Redze UX" />
         <label for="brand-prepared">Prepared for (client name)</label>
@@ -44,8 +62,8 @@
       </section>
 
       <section class="card">
-        <h2>Optional remote AI (Pro + BYOK)</h2>
-        <p class="hint">Sends a structured summary only — never raw DOM. Local suggestions always work without this.</p>
+        <h2>Optional remote AI (Pro + Agency, BYOK)</h2>
+        <p class="hint">Structured summary only — never raw DOM.</p>
         <label class="row">
           <span>Enable remote AI</span>
           <input id="ai-enabled" type="checkbox" />
@@ -62,13 +80,12 @@
         <h2>Doctrine</h2>
         <ul>
           <li>RedzeUX <strong>suggests</strong>. You synthesize. You decide.</li>
-          <li>Visible UI only — advisory confidence, not verdicts.</li>
-          <li>No accounts. No telemetry. Keys stay in <code>chrome.storage.local</code>.</li>
+          <li>Free analyze stays free — hybrid revenue on deliverables.</li>
         </ul>
         <p class="footer-truth">For the people · Local only · Always.</p>
-        <p class="fine">Allowances: <code>ALLOWANCES-LOG.md</code> · Philosophia Vesperi</p>
       </section>
     </main>
+    <script src="hybrid-schema.js"></script>
     <script src="billing-config.js"></script>
     <script src="entitlements.js"></script>
     <script src="export-report.js"></script>

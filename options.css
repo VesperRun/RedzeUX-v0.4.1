@@ -125,6 +125,18 @@ input[type='password'] {
   color: #7ad3a5;
 }
 
+.lane-list {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.lane-price {
+  color: #9fb0ff;
+  font-size: 12px;
+}
+
 .fine {
   margin: 8px 0 0;
   font-size: 11px;

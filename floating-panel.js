@@ -186,8 +186,7 @@
     const opts = options || {};
     let watermark = Boolean(opts.watermark);
     if (opts.watermark === undefined && globalScope.RedzeUXEntitlements) {
-      const gate = await globalScope.RedzeUXEntitlements.canCopyBrief();
-      watermark = gate.tier === 'free';
+      watermark = !(await globalScope.RedzeUXEntitlements.isPaid());
     }
 
     const markdown = builder.buildBrief(result, briefCache.benchmark, { watermark });
@@ -270,7 +269,7 @@
     const entitlements = globalScope.RedzeUXEntitlements;
     if (!entitlements) return;
 
-    const pro = await entitlements.isPro();
+    const pro = await entitlements.isPaid();
     const compareCard = panel.querySelector('#observeux-compare-card');
     const compareLock = panel.querySelector('#observeux-compare-lock');
     const exportCard = panel.querySelector('#observeux-export-card');
@@ -302,7 +301,7 @@
   }
 
   function showProToast(panel, feature) {
-    showToast(panel, `${feature} is Pro — Options → enter license key (ALLOWANCES-LOG.md).`);
+    showToast(panel, `${feature} requires Pro or Agency — Options → upgrade or paste license key.`);
   }
 
   function renderEvidenceBanner(detection, heuristics) {
@@ -771,7 +770,7 @@
           </button>
         </div>
         <div id="observeux-export-card" class="observeux-card observeux-export-card">
-          <h4>Client export (Pro)</h4>
+          <h4>Client export (Pro / Agency)</h4>
           <p id="observeux-export-lock" class="observeux-disclosure observeux-pro-lock">
             Branded .md, .txt, and print/PDF reports. Set agency name in Options.
           </p>
@@ -786,7 +785,7 @@
         </div>
         <div class="observeux-results"></div>
         <div id="observeux-compare-card" class="observeux-card observeux-compare-card">
-          <h4>Compare Sites (Pro · up to 5)</h4>
+          <h4>Compare Sites (Pro / Agency · up to 5)</h4>
           <p id="observeux-compare-lock" class="observeux-disclosure observeux-pro-lock">
             Save competitor URLs and run side-by-side teardowns. Unlock in extension Options.
           </p>

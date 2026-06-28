@@ -1,18 +1,16 @@
-// billing-config.js — Operator Stripe URLs (Application layer). No secret keys here.
-// Replace placeholders before you take money. See stripe/README.md.
+// billing-config.js — Operator URLs + hybrid lane config (Application layer).
 
 (function initBillingConfig(globalScope) {
   globalScope.RedzeUXBilling = {
-    /** Stripe Payment Link (Dashboard → Payment Links → copy URL) */
+    /** Pro — Stripe Payment Link ($24/mo or $199/yr products) */
     stripePaymentLink: '',
-    /** HTTPS endpoint for POST { "key": "RZX-PRO-..." } → { "valid": true|false } */
+    /** POST { key } → { valid, tier, expiresAt } */
     licenseVerifyUrl: '',
-    /**
-     * Billing portal session endpoint (optional).
-     * Default: licenseVerifyUrl with /v1/license/verify → /v1/billing/portal
-     */
+    /** Optional override; default derived from licenseVerifyUrl */
     billingPortalUrl: '',
-    /** Hours to cache a successful server verify in chrome.storage.local */
-    licenseCacheHours: 24
+    licenseCacheHours: 24,
+    /** Agency lane — contact for manual kit sales */
+    agencySalesEmail: 'support@redzeux.local',
+    agencyInfoUrl: ''
   };
 })(typeof window !== 'undefined' ? window : globalThis);

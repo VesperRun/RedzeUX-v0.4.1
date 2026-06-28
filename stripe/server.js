@@ -1,5 +1,5 @@
 /**
- * Minimal Stripe → RedzeUX license server (Application layer only).
+ * Hybrid license server — Pro (Stripe sub) + Agency (kit + maintenance).
  */
 
 import crypto from 'crypto';
@@ -19,6 +19,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_FILE = path.join(__dirname, 'licenses.json');
 const PORT = Number(process.env.PORT || 4242);
 const PUBLIC_BASE_URL = (process.env.PUBLIC_BASE_URL || `http://localhost:${PORT}`).replace(/\/$/, '');
+const ADMIN_SECRET = process.env.ADMIN_SECRET || '';
 
 const stripeSecret = process.env.STRIPE_SECRET_KEY;
 if (!stripeSecret) {
@@ -28,6 +29,9 @@ if (!stripeSecret) {
 
 const stripe = new Stripe(stripeSecret);
 const app = express();
+
+const TIERS = { PRO: 'pro', AGENCY: 'agency' };
+const KEY_RE = /^RZX-(PRO|AGENCY)-[A-Z0-9]{8,}$/;
 
 function loadLicenses() {
   try {
@@ -41,19 +45,27 @@ function saveLicenses(data) {
   fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
 }
 
-function generateLicenseKey() {
+function generateLicenseKey(tier = TIERS.PRO) {
   const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let suffix = '';
   for (let i = 0; i < 12; i += 1) {
     suffix += alphabet[crypto.randomInt(0, alphabet.length)];
   }
-  return `RZX-PRO-${suffix}`;
+  const prefix = tier === TIERS.AGENCY ? 'RZX-AGENCY' : 'RZX-PRO';
+  return `${prefix}-${suffix}`;
 }
 
 function normalizeKey(key) {
   return String(key || '')
     .trim()
     .toUpperCase();
+}
+
+function tierFromKey(key) {
+  const normalized = normalizeKey(key);
+  if (normalized.startsWith('RZX-AGENCY-')) return TIERS.AGENCY;
+  if (normalized.startsWith('RZX-PRO-')) return TIERS.PRO;
+  return null;
 }
 
 function upsertLicense(record) {
@@ -68,10 +80,24 @@ function getLicense(key) {
   return data.keys[normalizeKey(key)] || null;
 }
 
+function isAgencyActive(license) {
+  if (license.tier !== TIERS.AGENCY) return true;
+  if (!license.maintenanceExpiresAt) return license.active !== false;
+  return new Date(license.maintenanceExpiresAt).getTime() > Date.now();
+}
+
 async function refreshSubscriptionStatus(license) {
+  if (license.tier === TIERS.AGENCY) {
+    const active = isAgencyActive(license);
+    license.active = active;
+    upsertLicense(license);
+    return active;
+  }
+
   if (!license.stripeSubscriptionId) {
     return license.active !== false;
   }
+
   try {
     const sub = await stripe.subscriptions.retrieve(license.stripeSubscriptionId);
     const active = ['active', 'trialing'].includes(sub.status);
@@ -87,6 +113,13 @@ async function refreshSubscriptionStatus(license) {
   }
 }
 
+function licenseExpiresAt(license) {
+  if (license.tier === TIERS.AGENCY) {
+    return license.maintenanceExpiresAt || null;
+  }
+  return license.currentPeriodEnd || null;
+}
+
 const verifyOrigins = (process.env.LICENSE_VERIFY_ORIGINS || '')
   .split(',')
   .map((item) => item.trim())
@@ -100,11 +133,22 @@ function corsGate(req, res, next) {
   if (verifyOrigins.includes(origin) || verifyOrigins.includes('*')) {
     return next();
   }
-  return res.status(403).json({ ok: false, error: 'origin_not_allowed' });
+  return res.status(403).json({ valid: false, ok: false, error: 'origin_not_allowed' });
+}
+
+function adminGate(req, res, next) {
+  if (!ADMIN_SECRET) {
+    return res.status(503).json({ ok: false, error: 'admin_not_configured' });
+  }
+  const auth = req.headers.authorization || '';
+  if (auth !== `Bearer ${ADMIN_SECRET}`) {
+    return res.status(401).json({ ok: false, error: 'unauthorized' });
+  }
+  return next();
 }
 
 app.get('/health', (_req, res) => {
-  res.json({ ok: true, service: 'redzeux-stripe-license', version: '0.2.0' });
+  res.json({ ok: true, service: 'redzeux-hybrid-license', schema: 'free|pro|agency' });
 });
 
 app.get('/success', (_req, res) => {
@@ -112,9 +156,8 @@ app.get('/success', (_req, res) => {
 <html lang="en"><head><meta charset="utf-8"><title>RedzeUX Pro</title></head>
 <body style="font-family:system-ui;max-width:520px;margin:40px auto;padding:0 16px;">
   <h1>RedzeUX Pro</h1>
-  <p>Thank you. Check your email for your <code>RZX-PRO-…</code> license key.</p>
-  <p>Open the RedzeUX extension → <strong>Options &amp; Pro</strong> → paste key → <strong>Save &amp; verify</strong>.</p>
-  <p><em>RedzeUX suggests. You synthesize. You decide.</em></p>
+  <p>Check your email for your <code>RZX-PRO-…</code> license key.</p>
+  <p>Extension → <strong>Options</strong> → paste key → <strong>Save &amp; verify</strong>.</p>
 </body></html>`);
 });
 
@@ -143,30 +186,36 @@ app.post(
         const subscriptionId =
           typeof session.subscription === 'string' ? session.subscription : session.subscription?.id;
         const customerId = typeof session.customer === 'string' ? session.customer : session.customer?.id;
+        const metaTier = session.metadata?.redzeux_tier;
+        const tier = metaTier === TIERS.AGENCY ? TIERS.AGENCY : TIERS.PRO;
 
-        const key = generateLicenseKey();
-        upsertLicense({
+        const key = generateLicenseKey(tier);
+        const record = {
           key,
+          tier,
           email,
           stripeCustomerId: customerId || null,
-          stripeSubscriptionId: subscriptionId,
+          stripeSubscriptionId: tier === TIERS.PRO ? subscriptionId : null,
           stripeSessionId: session.id,
           active: true,
           createdAt: new Date().toISOString(),
-          currentPeriodEnd: null
-        });
+          currentPeriodEnd: null,
+          maintenanceExpiresAt:
+            tier === TIERS.AGENCY
+              ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
+              : null
+        };
 
-        if (subscriptionId) {
+        if (tier === TIERS.PRO && subscriptionId) {
           const sub = await stripe.subscriptions.retrieve(subscriptionId);
-          const license = getLicense(key);
-          license.currentPeriodEnd = sub.current_period_end
+          record.currentPeriodEnd = sub.current_period_end
             ? new Date(sub.current_period_end * 1000).toISOString()
             : null;
-          upsertLicense(license);
         }
 
-        console.log(`Issued license ${key} for ${email || 'unknown email'}`);
-        await sendLicenseKeyEmail(email, key);
+        upsertLicense(record);
+        console.log(`Issued ${tier} license ${key} for ${email || 'unknown'}`);
+        await sendLicenseKeyEmail(email, key, tier);
       }
 
       if (event.type === 'customer.subscription.deleted') {
@@ -177,7 +226,6 @@ app.post(
             license.active = false;
             license.deactivatedAt = new Date().toISOString();
             upsertLicense(license);
-            console.log(`Deactivated license ${license.key}`);
           }
         });
       }
@@ -208,7 +256,7 @@ app.use(express.json());
 
 app.post('/v1/license/verify', corsGate, async (req, res) => {
   const key = normalizeKey(req.body?.key);
-  if (!key || !/^RZX-PRO-[A-Z0-9]{8,}$/.test(key)) {
+  if (!key || !KEY_RE.test(key)) {
     return res.json({ valid: false, error: 'invalid_format' });
   }
 
@@ -224,9 +272,9 @@ app.post('/v1/license/verify', corsGate, async (req, res) => {
 
   return res.json({
     valid: true,
-    tier: 'pro',
-    expiresAt: license.currentPeriodEnd || null,
-    hasBillingPortal: Boolean(license.stripeCustomerId)
+    tier: license.tier || tierFromKey(key) || TIERS.PRO,
+    expiresAt: licenseExpiresAt(license),
+    hasBillingPortal: license.tier === TIERS.PRO && Boolean(license.stripeCustomerId)
   });
 });
 
@@ -236,6 +284,10 @@ app.post('/v1/billing/portal', corsGate, async (req, res) => {
 
   if (!license) {
     return res.json({ ok: false, error: 'not_found' });
+  }
+
+  if (license.tier !== TIERS.PRO) {
+    return res.json({ ok: false, error: 'pro_only' });
   }
 
   if (!license.stripeCustomerId) {
@@ -249,18 +301,40 @@ app.post('/v1/billing/portal', corsGate, async (req, res) => {
     });
     return res.json({ ok: true, url: session.url });
   } catch (error) {
-    console.error('Billing portal error:', error.message);
     return res.json({ ok: false, error: 'portal_failed', message: error.message });
   }
 });
 
+/** Operator: issue Agency (or Pro) keys — Authorization: Bearer ADMIN_SECRET */
+app.post('/v1/license/issue', adminGate, (req, res) => {
+  const tier = req.body?.tier === TIERS.AGENCY ? TIERS.AGENCY : TIERS.PRO;
+  const email = req.body?.email || null;
+  const maintenanceYears = Number(req.body?.maintenanceYears) || 1;
+
+  const key = generateLicenseKey(tier);
+  const record = {
+    key,
+    tier,
+    email,
+    stripeCustomerId: null,
+    stripeSubscriptionId: null,
+    active: true,
+    createdAt: new Date().toISOString(),
+    currentPeriodEnd: null,
+    maintenanceExpiresAt:
+      tier === TIERS.AGENCY
+        ? new Date(Date.now() + maintenanceYears * 365 * 24 * 60 * 60 * 1000).toISOString()
+        : null
+  };
+
+  upsertLicense(record);
+  console.log(`Operator issued ${tier} key ${key}`);
+  return res.json({ ok: true, key, tier, maintenanceExpiresAt: record.maintenanceExpiresAt });
+});
+
 app.listen(PORT, () => {
-  console.log(`RedzeUX Stripe license server on ${PUBLIC_BASE_URL} (port ${PORT})`);
-  console.log(`Webhook: POST ${PUBLIC_BASE_URL}/webhook`);
-  console.log(`Verify:  POST ${PUBLIC_BASE_URL}/v1/license/verify`);
-  console.log(`Portal:  POST ${PUBLIC_BASE_URL}/v1/billing/portal`);
-  console.log(`Success: GET  ${PUBLIC_BASE_URL}/success`);
-  if (!process.env.RESEND_API_KEY) {
-    console.log('Email:   RESEND_API_KEY not set — keys logged to console only');
-  }
+  console.log(`RedzeUX hybrid license server — ${PUBLIC_BASE_URL}`);
+  console.log(`Verify: POST /v1/license/verify`);
+  console.log(`Portal: POST /v1/billing/portal (pro only)`);
+  console.log(`Issue:  POST /v1/license/issue (admin)`);
 });

@@ -3,31 +3,32 @@
  * Resend API preferred; logs to console if not configured.
  */
 
-function buildLicenseEmailHtml(key) {
-  return `<!DOCTYPE html>
-<html><body style="font-family:system-ui,sans-serif;line-height:1.5;color:#111;">
-  <h1 style="color:#4858c8;">RedzeUX Pro</h1>
-  <p>Thank you for subscribing. Here is your license key:</p>
-  <p style="font-size:18px;font-weight:700;letter-spacing:0.04em;background:#f0f2ff;padding:12px 16px;border-radius:8px;">${key}</p>
-  <ol>
-    <li>Open the <strong>RedzeUX</strong> Chrome extension</li>
-    <li>Go to <strong>Options &amp; Pro</strong></li>
-    <li>Paste your key → <strong>Save &amp; verify key</strong></li>
-  </ol>
-  <p>Pro includes unlimited briefs, site compare, branded exports, and optional BYOK AI.</p>
-  <p style="color:#555;font-size:13px;"><em>RedzeUX suggests. You synthesize. You decide.</em><br>
-  Manage billing anytime from extension Options → Manage subscription.</p>
-</body></html>`;
-}
-
-export async function sendLicenseKeyEmail(to, key) {
+export async function sendLicenseKeyEmail(to, key, tier = 'pro') {
   if (!to) {
     console.warn('License email skipped: no recipient email on checkout session.');
     return { sent: false, reason: 'no_email' };
   }
 
+  const isAgency = tier === 'agency';
   const from = process.env.EMAIL_FROM || 'RedzeUX <onboarding@resend.dev>';
-  const subject = 'Your RedzeUX Pro license key';
+  const subject = isAgency ? 'Your RedzeUX Agency kit license key' : 'Your RedzeUX Pro license key';
+  const tierLine = isAgency
+    ? '<p>Your <strong>Agency (Kit)</strong> license includes white-label deliverables and compare. Maintenance renews annually.</p>'
+    : '<p>Your <strong>Pro (Teardown)</strong> subscription includes unlimited briefs, compare, and client exports.</p>';
+
+  const html = `<!DOCTYPE html>
+<html><body style="font-family:system-ui,sans-serif;line-height:1.5;color:#111;">
+  <h1 style="color:#4858c8;">RedzeUX ${isAgency ? 'Agency' : 'Pro'}</h1>
+  <p>Thank you. Here is your license key:</p>
+  <p style="font-size:18px;font-weight:700;letter-spacing:0.04em;background:#f0f2ff;padding:12px 16px;border-radius:8px;">${key}</p>
+  ${tierLine}
+  <ol>
+    <li>Open the <strong>RedzeUX</strong> Chrome extension</li>
+    <li>Go to <strong>Options</strong></li>
+    <li>Paste your key → <strong>Save &amp; verify key</strong></li>
+  </ol>
+  <p style="color:#555;font-size:13px;"><em>RedzeUX suggests. You synthesize. You decide.</em></p>
+</body></html>`;
 
   if (process.env.RESEND_API_KEY) {
     try {
@@ -41,7 +42,7 @@ export async function sendLicenseKeyEmail(to, key) {
           from,
           to: [to],
           subject,
-          html: buildLicenseEmailHtml(key)
+          html
         })
       });
       if (!response.ok) {

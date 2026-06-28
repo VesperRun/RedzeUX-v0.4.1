@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Redze UX - Privacy-First UX Snapshots",
-  "description": "Local-first competitive UX snapshots and paste-ready briefs from visible page UI — advisory, not verdicts.",
-  "version": "0.4.0",
+  "description": "Hybrid local-first UX snapshots — Free · Pro · Agency. Advisory, visible UI only.",
+  "version": "0.4.1",
   "action": {
     "default_title": "Redze UX",
     "default_popup": "popup.html"
@@ -32,6 +32,7 @@
         "ai-wrapper.js",
         "comparison-manager.js",
         "brief-builder.js",
+        "hybrid-schema.js",
         "entitlements.js",
         "export-report.js",
         "floating-panel.js",
@@ -43,7 +44,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["floating-panel.css"],
+      "resources": ["floating-panel.css", "agency/KIT.md"],
       "matches": ["<all_urls>"]
     }
   ]

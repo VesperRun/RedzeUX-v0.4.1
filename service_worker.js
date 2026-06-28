@@ -11,6 +11,7 @@ const CONTENT_SCRIPT_FILES = [
   'ai-wrapper.js',
   'comparison-manager.js',
   'brief-builder.js',
+  'hybrid-schema.js',
   'entitlements.js',
   'export-report.js',
   'floating-panel.js',

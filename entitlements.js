@@ -1,18 +1,18 @@
-// entitlements.js — Application-tier local plan gate (no Core logic).
+// entitlements.js — Hybrid tier gate: free · pro · agency (Application layer only).
 
 (function initEntitlements(globalScope) {
+  const hybrid = () => globalScope.RedzeUXHybrid || {};
+  const TIERS = () => hybrid().TIERS || { FREE: 'free', PRO: 'pro', AGENCY: 'agency' };
+
   const STORAGE_KEYS = {
     licenseKey: 'redzeux_license_key',
+    licenseTier: 'redzeux_license_tier',
     briefCopyDate: 'redzeux_brief_copy_date',
     briefCopyCount: 'redzeux_brief_copy_count',
     licenseActive: 'redzeux_license_active',
     licenseVerifiedAt: 'redzeux_license_verified_at',
     licenseExpiresAt: 'redzeux_license_expires_at'
   };
-
-  const FREE_DAILY_BRIEFS = 3;
-  const DEV_PRO_KEY = 'RZX-PRO-VESPER-DEV';
-  const PRO_KEY_PATTERN = /^RZX-PRO-[A-Z0-9]{8,}$/;
 
   function getBilling() {
     return globalScope.RedzeUXBilling || {};
@@ -29,11 +29,18 @@
       .toUpperCase();
   }
 
-  function matchesProPattern(key) {
+  function tierFromKey(key) {
     const normalized = normalizeKey(key);
-    if (!normalized) return false;
-    if (normalized === DEV_PRO_KEY) return true;
-    return PRO_KEY_PATTERN.test(normalized);
+    const keys = hybrid().KEYS || {};
+    if (normalized === keys.DEV_AGENCY) return TIERS().AGENCY;
+    if (normalized === keys.DEV_PRO) return TIERS().PRO;
+    if (keys.AGENCY_PATTERN?.test(normalized)) return TIERS().AGENCY;
+    if (keys.PRO_PATTERN?.test(normalized)) return TIERS().PRO;
+    return TIERS().FREE;
+  }
+
+  function matchesLicensePattern(key) {
+    return tierFromKey(key) !== TIERS().FREE;
   }
 
   function storageGet(keys) {
@@ -56,6 +63,7 @@
 
   async function clearLicenseVerification() {
     await storageSet({
+      [STORAGE_KEYS.licenseTier]: TIERS().FREE,
       [STORAGE_KEYS.licenseActive]: false,
       [STORAGE_KEYS.licenseVerifiedAt]: null,
       [STORAGE_KEYS.licenseExpiresAt]: null
@@ -67,30 +75,45 @@
     return data[STORAGE_KEYS.licenseKey] || '';
   }
 
+  async function getStoredTier() {
+    const data = await storageGet([STORAGE_KEYS.licenseTier, STORAGE_KEYS.licenseKey]);
+    const fromStorage = data[STORAGE_KEYS.licenseTier];
+    if (fromStorage === TIERS().PRO || fromStorage === TIERS().AGENCY) {
+      return fromStorage;
+    }
+    const fromKey = tierFromKey(data[STORAGE_KEYS.licenseKey]);
+    return fromKey === TIERS().FREE ? TIERS().FREE : fromKey;
+  }
+
   async function verifyLicenseWithServer(key) {
     const normalized = normalizeKey(key);
-    if (!matchesProPattern(normalized)) {
+    const keyTier = tierFromKey(normalized);
+
+    if (keyTier === TIERS().FREE) {
       await clearLicenseVerification();
       return { valid: false, error: 'invalid_format' };
     }
 
-    if (normalized === DEV_PRO_KEY) {
+    const keys = hybrid().KEYS || {};
+    if (normalized === keys.DEV_PRO || normalized === keys.DEV_AGENCY) {
       await storageSet({
+        [STORAGE_KEYS.licenseTier]: keyTier,
         [STORAGE_KEYS.licenseActive]: true,
         [STORAGE_KEYS.licenseVerifiedAt]: new Date().toISOString(),
         [STORAGE_KEYS.licenseExpiresAt]: null
       });
-      return { valid: true, tier: 'pro', source: 'dev' };
+      return { valid: true, tier: keyTier, source: 'dev' };
     }
 
     const verifyUrl = String(getBilling().licenseVerifyUrl || '').trim();
     if (!verifyUrl) {
       await storageSet({
+        [STORAGE_KEYS.licenseTier]: keyTier,
         [STORAGE_KEYS.licenseActive]: true,
         [STORAGE_KEYS.licenseVerifiedAt]: new Date().toISOString(),
         [STORAGE_KEYS.licenseExpiresAt]: null
       });
-      return { valid: true, tier: 'pro', source: 'offline_pattern' };
+      return { valid: true, tier: keyTier, source: 'offline_pattern' };
     }
 
     try {
@@ -101,15 +124,18 @@
       });
       const data = await response.json();
       const valid = Boolean(data.valid);
+      const tier = valid ? data.tier || keyTier : TIERS().FREE;
       await storageSet({
+        [STORAGE_KEYS.licenseTier]: tier,
         [STORAGE_KEYS.licenseActive]: valid,
         [STORAGE_KEYS.licenseVerifiedAt]: new Date().toISOString(),
         [STORAGE_KEYS.licenseExpiresAt]: data.expiresAt || null
       });
       return {
         valid,
-        tier: valid ? 'pro' : 'free',
-        source: 'stripe_verify',
+        tier,
+        source: 'server_verify',
+        hasBillingPortal: Boolean(data.hasBillingPortal),
         error: valid ? null : data.error || 'inactive'
       };
     } catch (error) {
@@ -127,12 +153,13 @@
     return verifyLicenseWithServer(normalized);
   }
 
-  async function isPro() {
+  async function isLicenseValid() {
     const key = await getLicenseKey();
-    if (!matchesProPattern(key)) return false;
+    if (!matchesLicensePattern(key)) return false;
 
+    const keys = hybrid().KEYS || {};
     const normalized = normalizeKey(key);
-    if (normalized === DEV_PRO_KEY) return true;
+    if (normalized === keys.DEV_PRO || normalized === keys.DEV_AGENCY) return true;
 
     const verifyUrl = String(getBilling().licenseVerifyUrl || '').trim();
     if (!verifyUrl) return true;
@@ -154,11 +181,38 @@
     if (!verifiedAt) return false;
 
     const maxAgeMs = cacheHours() * 60 * 60 * 1000;
-    if (Date.now() - new Date(verifiedAt).getTime() > maxAgeMs) {
-      return false;
-    }
+    return Date.now() - new Date(verifiedAt).getTime() <= maxAgeMs;
+  }
 
-    return true;
+  async function getTier() {
+    if (!(await isLicenseValid())) return TIERS().FREE;
+    return getStoredTier();
+  }
+
+  async function isPaid() {
+    const tier = await getTier();
+    return tier === TIERS().PRO || tier === TIERS().AGENCY;
+  }
+
+  async function isPro() {
+    return (await getTier()) === TIERS().PRO;
+  }
+
+  async function isAgency() {
+    return (await getTier()) === TIERS().AGENCY;
+  }
+
+  async function hasCapability(cap) {
+    const caps = hybrid().CAPABILITIES || {};
+    const allowed = caps[cap];
+    if (!Array.isArray(allowed)) return false;
+    const tier = await getTier();
+    return allowed.includes(tier);
+  }
+
+  async function getTierLabel() {
+    const labels = hybrid().LABELS || {};
+    return labels[await getTier()] || 'Free (Snapshot)';
   }
 
   function getBillingPortalUrl() {
@@ -176,23 +230,25 @@
     return true;
   }
 
-  async function getTierLabel() {
-    return (await isPro()) ? 'Pro (Teardown)' : 'Free (Snapshot)';
-  }
-
   async function canUseCompare() {
-    return isPro();
+    return hasCapability('compare');
   }
 
   async function canUseRemoteAi() {
-    return isPro();
+    return hasCapability('remoteAi');
+  }
+
+  async function canUseExport() {
+    return hasCapability('clientExport');
   }
 
   async function canCopyBrief() {
-    if (await isPro()) {
-      return { ok: true, remaining: Infinity, tier: 'pro' };
+    if (await hasCapability('unlimitedBriefs')) {
+      const tier = await getTier();
+      return { ok: true, remaining: Infinity, tier };
     }
 
+    const limit = hybrid().FREE_DAILY_BRIEFS || 3;
     const today = new Date().toISOString().slice(0, 10);
     const data = await storageGet([STORAGE_KEYS.briefCopyDate, STORAGE_KEYS.briefCopyCount]);
     let count = 0;
@@ -200,24 +256,20 @@
       count = Number(data[STORAGE_KEYS.briefCopyCount]) || 0;
     }
 
-    if (count >= FREE_DAILY_BRIEFS) {
+    if (count >= limit) {
       return {
         ok: false,
         remaining: 0,
-        tier: 'free',
-        message: `Free tier includes ${FREE_DAILY_BRIEFS} brief copies per day. Upgrade to Pro in Options (Stripe) for unlimited copies and compare.`
+        tier: TIERS().FREE,
+        message: `Free tier: ${limit} brief copies/day. Upgrade to Pro ($24/mo) or Agency kit in Options.`
       };
     }
 
-    return {
-      ok: true,
-      remaining: FREE_DAILY_BRIEFS - count,
-      tier: 'free'
-    };
+    return { ok: true, remaining: limit - count, tier: TIERS().FREE };
   }
 
   async function recordBriefCopy() {
-    if (await isPro()) return;
+    if (await hasCapability('unlimitedBriefs')) return;
 
     const today = new Date().toISOString().slice(0, 10);
     const data = await storageGet([STORAGE_KEYS.briefCopyDate, STORAGE_KEYS.briefCopyCount]);
@@ -232,32 +284,12 @@
     });
   }
 
-  function onTierChanged(callback) {
-    if (!chrome.storage?.onChanged) return () => {};
-    const listener = (changes, area) => {
-      if (area !== 'local') return;
-      if (
-        changes[STORAGE_KEYS.licenseKey] ||
-        changes[STORAGE_KEYS.licenseActive] ||
-        changes[STORAGE_KEYS.licenseVerifiedAt]
-      ) {
-        callback();
-      }
-    };
-    chrome.storage.onChanged.addListener(listener);
-    return () => chrome.storage.onChanged.removeListener(listener);
-  }
-
-  async function canUseExport() {
-    return isPro();
-  }
-
   async function openBillingPortal() {
-    const key = await getLicenseKey();
-    if (!matchesProPattern(key)) {
-      return { ok: false, error: 'no_key' };
+    if (!(await isPro())) {
+      return { ok: false, error: 'pro_only' };
     }
 
+    const key = await getLicenseKey();
     const portalUrl = getBillingPortalUrl();
     if (!portalUrl) {
       return { ok: false, error: 'portal_not_configured' };
@@ -280,14 +312,36 @@
     }
   }
 
+  function onTierChanged(callback) {
+    if (!chrome.storage?.onChanged) return () => {};
+    const listener = (changes, area) => {
+      if (area !== 'local') return;
+      if (
+        changes[STORAGE_KEYS.licenseKey] ||
+        changes[STORAGE_KEYS.licenseTier] ||
+        changes[STORAGE_KEYS.licenseActive] ||
+        changes[STORAGE_KEYS.licenseVerifiedAt]
+      ) {
+        callback();
+      }
+    };
+    chrome.storage.onChanged.addListener(listener);
+    return () => chrome.storage.onChanged.removeListener(listener);
+  }
+
   globalScope.RedzeUXEntitlements = {
-    FREE_DAILY_BRIEFS,
-    DEV_PRO_KEY,
     getLicenseKey,
     setLicenseKey,
     verifyLicenseWithServer,
-    matchesProPattern,
+    matchesLicensePattern,
+    matchesProPattern: matchesLicensePattern,
+    tierFromKey,
+    getTier,
+    isPaid,
     isPro,
+    isAgency,
+    isLicenseValid,
+    hasCapability,
     getTierLabel,
     canUseCompare,
     canUseRemoteAi,
@@ -297,6 +351,9 @@
     openStripeCheckout,
     openBillingPortal,
     getBillingPortalUrl,
-    onTierChanged
+    onTierChanged,
+    DEV_PRO_KEY: (hybrid().KEYS || {}).DEV_PRO || 'RZX-PRO-VESPER-DEV',
+    DEV_AGENCY_KEY: (hybrid().KEYS || {}).DEV_AGENCY || 'RZX-AGENCY-VESPER-DEV',
+    FREE_DAILY_BRIEFS: hybrid().FREE_DAILY_BRIEFS || 3
   };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -27,6 +27,7 @@ Governed by **Philosophia Vesperi** · Prisma Narcissi · Galvenais Rule.
 | A-014 | Resend checkout email (key only, no DOM) | Application | Fulfillment; optional until RESEND_API_KEY set | Production |
 | A-015 | Stripe Customer Portal via `/v1/billing/portal` | Application | Subscription management; Stripe-hosted | Production |
 | A-016 | Branded export (.md / .txt / print-PDF) Pro-gated | Application | Client deliverable; Core brief unchanged | v0.4 |
+| A-017 | Hybrid pricing (Free / Pro sub / Agency kit) | Application | Documented in PRICING.md; Agency sold manual at first | GTM |
 
 ---
 
@@ -57,6 +58,7 @@ Governed by **Philosophia Vesperi** · Prisma Narcissi · Galvenais Rule.
 
 | Date | Entry |
 |------|-------|
+| 2026-06-28 | v0.4.1 — Hybrid schema (`hybrid-schema.js`), Agency keys, kit + white-label script |
 | 2026-06-28 | v0.4.0 — checkout email, billing portal, branded exports |
 | 2026-06-28 | Stripe Payment Link + webhook license server + verify API (v0.3.1) |
 | 2026-06-28 | Initial log + enhanced MVP entitlements (v0.3.0) |
