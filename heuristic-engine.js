@@ -160,7 +160,7 @@
       confidenceGuide: {
         high: 'observable facts from visible UI',
         medium: 'heuristic interpretation from visible patterns',
-        advisory: 'AI suggestions only, not guaranteed outcomes'
+        advisory: 'advisory suggestions only, not guaranteed outcomes'
       }
     };
   }

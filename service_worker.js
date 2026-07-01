@@ -151,7 +151,7 @@ async function collectComparisonSummaries(selectedUrls) {
       results.push({
         url,
         status: 'not-open',
-        note: 'Open this URL in a tab, then run compare.'
+        note: 'Open this URL in a tab, then click Compare Competitors.'
       });
       continue;
     }
@@ -161,7 +161,7 @@ async function collectComparisonSummaries(selectedUrls) {
       results.push({
         url,
         status: 'error',
-        note: response.error || 'Could not analyze tab.'
+        note: response.error || 'Could not snapshot tab.'
       });
       continue;
     }

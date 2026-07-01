@@ -52,12 +52,12 @@
       `**Page:** ${clean(detection.title, MAX_TITLE)}`,
       `**Type:** ${clean(siteLabel)} (visible UI only)`,
       '',
-      `**Clearly visible (high confidence):** ${visible}`,
-      `**Missing or weak (medium confidence):** ${missing}`
+      `**Visible patterns (high confidence):** ${visible}`,
+      `**Pattern gaps (medium confidence):** ${missing}`
     ];
 
     if (categoryNote) {
-      lines.push(`**Category note:** ${categoryNote}`);
+      lines.push(`**Benchmark:** ${categoryNote}`);
     }
 
     lines.push(
@@ -91,11 +91,11 @@
     return [
       '',
       '---',
-      '## Compare addendum',
+      '## Competitor compare',
       `**Sites compared:** ${benchmark.siteCount || '?'}`,
       `**Shared visible patterns:** ${shared}`,
       gapLine,
-      verdict ? `**Compare summary:** ${verdict}` : ''
+      verdict ? `**Competitor snapshot:** ${verdict}` : ''
     ]
       .filter(Boolean)
       .join('\n');
@@ -103,7 +103,7 @@
 
   function buildCompareOnlyBrief(benchmark) {
     if (!benchmark || !benchmark.ok) {
-      return 'Run **Compare Selected** with at least two sites open in tabs, then copy again.';
+      return 'Run **Compare Competitors** with at least two sites open in tabs, then copy again.';
     }
 
     const shared =
@@ -129,7 +129,7 @@
       return buildCompareOnlyBrief(benchmark);
     }
     if (!result) {
-      return 'Run **Analyze Page** (or compare sites), then tap **Copy Executive Brief** again.';
+      return 'Run **Generate UX Snapshot** (or compare competitors), then tap **Copy Brief** again.';
     }
     const pageBrief = buildPageBrief(result);
     const compareSection = benchmark?.ok ? buildCompareBrief(benchmark) : '';

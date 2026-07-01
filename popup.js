@@ -44,7 +44,7 @@ async function openPanel() {
     statusLine.textContent = `Could not open panel: ${response.error || 'unknown error'}`;
     return;
   }
-  statusLine.textContent = 'Panel open — analyze or copy a brief from there.';
+  statusLine.textContent = 'Panel open — generate a snapshot or copy a brief from there.';
 }
 
 async function analyzeCurrentPage() {
@@ -56,10 +56,10 @@ async function analyzeCurrentPage() {
   await openPanel();
   const response = await sendTabMessage(tab.id, { type: 'OBSERVEUX_ANALYZE_CURRENT_PAGE' });
   if (!response.ok) {
-    statusLine.textContent = `Analysis failed: ${response.error || 'unknown error'}`;
+    statusLine.textContent = `Snapshot failed: ${response.error || 'unknown error'}`;
     return;
   }
-  statusLine.textContent = 'Analysis complete — see floating panel.';
+  statusLine.textContent = 'Snapshot ready — see floating panel.';
 }
 
 document.getElementById('open-panel').addEventListener('click', openPanel);

@@ -136,6 +136,263 @@
     return item.label || item.name;
   }
 
+  function benchmarkHeading(heuristics, detection) {
+    const siteLabel = heuristics?.categoryBenchmark?.siteTypeLabel || detection?.siteType || 'site';
+    return `Benchmark vs typical ${siteLabel} patterns`;
+  }
+
+  function escapeHtml(text) {
+    return String(text || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function labelForFeatureKey(key) {
+    const tax = globalScope.ObserveUXFeatureTaxonomy;
+    return tax ? tax.labelFeature(key) : key;
+  }
+
+  function renderFeatureChips(features) {
+    if (!features || features.length === 0) {
+      return '<p class="observeux-disclosure">Insufficient visible evidence.</p>';
+    }
+    return features
+      .map((feature) => {
+        const key = escapeHtml(feature.name);
+        const label = escapeHtml(featureLabel(feature));
+        return `<button type="button" class="observeux-chip observeux-chip-btn" data-feature="${key}" title="See what was found">${label} (${feature.count})</button>`;
+      })
+      .join('');
+  }
+
+  function renderClickableFeatureList(items) {
+    if (!items || items.length === 0) {
+      return '<li class="observeux-disclosure">Insufficient visible evidence.</li>';
+    }
+    return items
+      .map((item) => {
+        const key = escapeHtml(item.name);
+        const label = escapeHtml(featureLabel(item));
+        return `<li><button type="button" class="observeux-list-btn" data-feature="${key}">${label}</button></li>`;
+      })
+      .join('');
+  }
+
+  function renderMatchRow(match) {
+    const source =
+      match.source === 'shadow'
+        ? `shadow · ${escapeHtml(match.host || 'custom element')}`
+        : 'page';
+    return `<li class="observeux-match-item">
+      <span class="observeux-match-label">${escapeHtml(match.label)}</span>
+      <span class="observeux-match-meta">${escapeHtml(match.tag)} · ${source}</span>
+      <code class="observeux-match-selector">${escapeHtml(match.selector)}</code>
+    </li>`;
+  }
+
+  function renderSelectorList(selectors) {
+    if (!selectors || selectors.length === 0) {
+      return '<li class="observeux-disclosure">No selectors defined.</li>';
+    }
+    return selectors.map((selector) => `<li><code>${escapeHtml(selector)}</code></li>`).join('');
+  }
+
+  function closeDetailDrawer(panel) {
+    const drawer = panel?.querySelector('#observeux-detail-drawer');
+    if (drawer) {
+      drawer.classList.add('hidden');
+      drawer.innerHTML = '';
+    }
+    panel?.querySelectorAll('.observeux-chip-btn.is-active, .observeux-list-btn.is-active').forEach((node) => {
+      node.classList.remove('is-active');
+    });
+  }
+
+  function openDetailDrawer(panel, title, bodyHtml) {
+    let drawer = panel.querySelector('#observeux-detail-drawer');
+    if (!drawer) {
+      drawer = document.createElement('div');
+      drawer.id = 'observeux-detail-drawer';
+      drawer.className = 'observeux-detail-drawer';
+      const body = panel.querySelector('.observeux-body');
+      const results = panel.querySelector('.observeux-results');
+      if (body && results) {
+        results.insertAdjacentElement('afterend', drawer);
+      } else if (body) {
+        body.appendChild(drawer);
+      }
+    }
+    drawer.classList.remove('hidden');
+    drawer.innerHTML = `
+      <div class="observeux-detail-header">
+        <strong>${title}</strong>
+        <button type="button" class="observeux-btn observeux-detail-close" aria-label="Close details">Close</button>
+      </div>
+      <div class="observeux-detail-body">${bodyHtml}</div>
+    `;
+    drawer.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+
+  function isListedPatternGap(featureKey, heuristics) {
+    const missing = heuristics?.missingWeakFeatures || [];
+    const categoryGaps = heuristics?.categoryBenchmark?.categoryGaps || [];
+    return (
+      missing.some((item) => item.name === featureKey) ||
+      categoryGaps.some((item) => item.key === featureKey)
+    );
+  }
+
+  function renderPatternGapExplanation(featureKey, label, detection, heuristics, selectors) {
+    const siteTypeKey = detection?.siteType || heuristics?.categoryBenchmark?.siteType || 'general_web_app';
+    const siteLabel =
+      heuristics?.categoryBenchmark?.siteTypeLabel || labelSiteType(siteTypeKey) || 'this type of site';
+    const tax = globalScope.ObserveUXFeatureTaxonomy;
+    const siteContext = tax?.getSiteTypeGapContext?.(siteTypeKey) || {};
+    const rationale = tax?.getFeatureGapRationale?.(featureKey, siteTypeKey) || {};
+    const expectedLabels = tax?.getExpectedFeatureLabels?.(siteTypeKey) || [];
+    const expectedLine =
+      expectedLabels.length > 0
+        ? expectedLabels.join(', ')
+        : 'patterns common to this category';
+    const evidenceNote = heuristics?.evidenceScopeNote || 'Evidence is from visible UI on the current view only.';
+    const closedHosts = detection?.observationLimits?.closedShadowHostsEstimated || 0;
+    const shadowHint =
+      closedHosts > 0
+        ? ` Also, about ${closedHosts} custom element(s) on this page may hide controls inside closed shadow regions we cannot inspect.`
+        : '';
+    const whyText = rationale.why || `${label} is commonly expected on ${siteLabel} pages.`;
+    const hintText =
+      rationale.hint ||
+      'It may be present under a different label, inside a menu, below the fold, or only after a click.';
+
+    return `
+      <p class="observeux-disclosure observeux-gap-lead">
+        <strong>${escapeHtml(label)}</strong> is flagged as a <strong>pattern gap</strong> on this
+        <strong>${escapeHtml(siteLabel)}</strong> snapshot — not because we found something wrong with it,
+        but because similar pages often make this pattern easy to spot in the main view, and our visible scan
+        did not pick it up here.
+      </p>
+      <h5 class="observeux-detail-subhead">About ${escapeHtml(siteLabel)} benchmarks</h5>
+      <p class="observeux-disclosure">${escapeHtml(siteContext.intro || '')}</p>
+      <p class="observeux-disclosure">${escapeHtml(siteContext.peerSnapshot || '')}</p>
+      <h5 class="observeux-detail-subhead">Why ${escapeHtml(label)} matters in this comparison</h5>
+      <p class="observeux-disclosure">${escapeHtml(whyText)}</p>
+      <p class="observeux-disclosure">
+        For this benchmark, we compare against: ${escapeHtml(expectedLine)}.
+        This item returned <strong>0 visible matches</strong> on the current view (medium confidence).
+      </p>
+      <h5 class="observeux-detail-subhead">What we checked on this page</h5>
+      <ul class="observeux-list observeux-selector-list">${renderSelectorList(selectors)}</ul>
+      <h5 class="observeux-detail-subhead">Before you treat this as confirmed missing</h5>
+      <ul class="observeux-list">
+        <li>${escapeHtml(hintText)}</li>
+        <li>Try scrolling the footer, opening the main menu, or expanding collapsed panels — then run another snapshot.</li>
+        <li>${escapeHtml(evidenceNote)}${escapeHtml(shadowHint)}</li>
+      </ul>
+      <p class="observeux-disclosure observeux-footnote">
+        Pattern gaps are advisory benchmarks, not defects. RedzeUX suggests — you synthesize and decide.
+      </p>
+    `;
+  }
+
+  function labelSiteType(key) {
+    const tax = globalScope.ObserveUXFeatureTaxonomy;
+    return tax ? tax.labelSiteType(key) : key;
+  }
+
+  function renderAbsentFeatureExplanation(label, selectors) {
+    return `
+      <p class="observeux-disclosure">
+        <strong>${escapeHtml(label)}</strong> was not detected on this view with the checks below.
+        It may be absent, use different labeling, or sit outside what the scan can see from here.
+      </p>
+      <h5 class="observeux-detail-subhead">What we checked</h5>
+      <ul class="observeux-list observeux-selector-list">${renderSelectorList(selectors)}</ul>
+    `;
+  }
+
+  function showFeatureDetail(panel, featureKey) {
+    const result = briefCache.result;
+    if (!result?.detection) return;
+
+    const detection = result.detection;
+    const heuristics = result.heuristics || {};
+    const count = detection.featureCounts?.[featureKey] || 0;
+    const label = labelForFeatureKey(featureKey);
+    const matches = detection.featureMatches?.[featureKey] || [];
+    const selectors =
+      globalScope.ObserveUXDomDetector?.getFeatureSelectors?.(featureKey) || [];
+    const isGap = isListedPatternGap(featureKey, heuristics);
+
+    panel.querySelectorAll('.observeux-chip-btn.is-active, .observeux-list-btn.is-active').forEach((node) => {
+      node.classList.remove('is-active');
+    });
+    panel.querySelectorAll(`[data-feature="${featureKey}"]`).forEach((node) => {
+      node.classList.add('is-active');
+    });
+
+    let bodyHtml = '';
+    let drawerTitle = `${escapeHtml(label)} — evidence`;
+
+    if (count === 0 && isGap) {
+      drawerTitle = `${escapeHtml(label)} — pattern gap`;
+      bodyHtml = renderPatternGapExplanation(featureKey, label, detection, heuristics, selectors);
+    } else if (count === 0) {
+      bodyHtml = renderAbsentFeatureExplanation(label, selectors);
+    } else if (matches.length === 0) {
+      bodyHtml = `
+        <p class="observeux-disclosure"><strong>${count}</strong> visible match${count === 1 ? '' : 'es'} for ${escapeHtml(label)}. Detailed samples were not captured — rescan to refresh.</p>
+      `;
+    } else {
+      const capped = count > matches.length;
+      bodyHtml = `
+        <p class="observeux-disclosure"><strong>${count}</strong> visible · showing ${matches.length}${capped ? ' (sample)' : ''}</p>
+        <ul class="observeux-match-list">${matches.map(renderMatchRow).join('')}</ul>
+      `;
+    }
+
+    openDetailDrawer(panel, drawerTitle, bodyHtml);
+  }
+
+  function showEvidenceDetail(panel) {
+    const result = briefCache.result;
+    if (!result?.detection) return;
+
+    const detection = result.detection;
+    const limits = detection.observationLimits || {};
+    const details = detection.evidenceDetails || {};
+    const scopeLabel = detection.evidenceScopeLabel || detection.evidenceScope?.replace(/_/g, ' ') || 'Visible UI';
+    const hosts = details.openShadowHosts || [];
+    const hostList =
+      hosts.length > 0
+        ? hosts
+            .map((host) => {
+              const bits = [host.tag];
+              if (host.id) bits.push(`#${host.id}`);
+              if (host.classes) bits.push(`.${host.classes.split(/\s+/)[0]}`);
+              return `<li><code>${escapeHtml(bits.join(''))}</code></li>`;
+            })
+            .join('')
+        : '<li class="observeux-disclosure">No open shadow regions scanned.</li>';
+
+    const bodyHtml = `
+      <p class="observeux-disclosure"><strong>${escapeHtml(scopeLabel)}</strong> — ${escapeHtml(result.heuristics?.evidenceScopeNote || 'Visible UI only.')}</p>
+      <h5 class="observeux-detail-subhead">Scan coverage</h5>
+      <ul class="observeux-list">
+        <li><strong>${limits.nodesScanned || 0}</strong> DOM nodes visited</li>
+        <li><strong>${details.shadowRegionsScanned || limits.openShadowRootsScanned || 0}</strong> open shadow region(s)</li>
+        <li><strong>${details.closedShadowHostsEstimated || limits.closedShadowHostsEstimated || 0}</strong> possible closed-shadow custom element(s)</li>
+      </ul>
+      <h5 class="observeux-detail-subhead">Open shadow hosts (sample)</h5>
+      <ul class="observeux-list observeux-selector-list">${hostList}</ul>
+      <p class="observeux-disclosure observeux-footnote">Iframes, credentials, and closed shadow content are excluded.</p>
+    `;
+
+    openDetailDrawer(panel, 'What we can see — details', bodyHtml);
+  }
+
   function showToast(anchorPanel, message) {
     if (!anchorPanel) return;
     const existing = anchorPanel.querySelector('.observeux-toast');
@@ -226,7 +483,7 @@
       }
       showToast(panel, 'Brief copied — paste in Slack or Notion');
     } catch (error) {
-      showToast(panel, 'Could not build brief. Run Analyze Page first.');
+      showToast(panel, 'Could not build brief. Generate a UX snapshot first.');
     }
   }
 
@@ -260,7 +517,7 @@
         showToast(panel, 'Print view opened — Save as PDF');
       }
     } catch (error) {
-      showToast(panel, 'Export failed. Analyze page first.');
+      showToast(panel, 'Export failed. Generate a UX snapshot first.');
     }
   }
 
@@ -291,11 +548,11 @@
 
     if (copyBtn) {
       if (pro) {
-        copyBtn.textContent = 'Copy Executive Brief';
+        copyBtn.textContent = 'Copy Brief';
       } else {
         const gate = await entitlements.canCopyBrief();
         const left = gate.remaining === Infinity ? '' : ` (${gate.remaining} left today)`;
-        copyBtn.textContent = `Copy Executive Brief${left}`;
+        copyBtn.textContent = `Copy Brief${left}`;
       }
     }
   }
@@ -305,19 +562,30 @@
   }
 
   function renderEvidenceBanner(detection, heuristics) {
-    const scope = detection?.evidenceScope || 'light_dom';
+    const scopeLabel = detection?.evidenceScopeLabel || detection?.evidenceScope?.replace(/_/g, ' ') || 'Visible UI';
     const note = heuristics?.evidenceScopeNote || 'Visible UI only.';
+    const shadowCount = detection?.evidenceDetails?.shadowRegionsScanned || detection?.observationLimits?.openShadowRootsScanned || 0;
+    const shadowHint =
+      shadowCount > 0
+        ? ` Includes up to ${shadowCount} open shadow region${shadowCount === 1 ? '' : 's'}.`
+        : '';
     return `
       <div class="observeux-card observeux-scope-banner">
         <h4>What we can see</h4>
-        <p class="observeux-disclosure"><strong>${scope.replace(/_/g, ' ')}</strong> — ${note}</p>
+        <p class="observeux-disclosure">
+          <button type="button" class="observeux-evidence-link" data-evidence-detail="true" title="See scan coverage">
+            <strong>${escapeHtml(scopeLabel)}</strong>
+          </button>
+          — ${escapeHtml(note)}${escapeHtml(shadowHint)}
+          <button type="button" class="observeux-evidence-link observeux-evidence-link-inline" data-evidence-detail="true">Details</button>
+        </p>
       </div>
     `;
   }
 
   function renderCompareMatrix(benchmark) {
     if (!benchmark?.ok || !benchmark.matrix?.length) {
-      return '<p class="observeux-disclosure">No overlap matrix yet. Open compared URLs in tabs and run compare again.</p>';
+      return '<p class="observeux-disclosure">No overlap matrix yet. Open compared URLs in tabs and click Compare Competitors again.</p>';
     }
     const topRows = benchmark.matrix
       .filter((row) => row.presentCount > 0)
@@ -352,7 +620,7 @@
     const benchmarkBlock = benchmark
       ? `
         <div class="observeux-card">
-          <h4>Compare synthesis</h4>
+          <h4>Competitor snapshot</h4>
           <p class="observeux-disclosure">${benchmark.narrative || 'Insufficient visible evidence.'}</p>
           ${renderCompareMatrix(benchmark)}
         </div>
@@ -362,14 +630,14 @@
     assistantBody.innerHTML = `
       <div class="observeux-card">
         <h4>RedzeUX Resultant</h4>
-        <p class="observeux-disclosure">${h?.categoryBenchmark?.narrative || 'Run analysis to see category context.'}</p>
+        <p class="observeux-disclosure">${h?.categoryBenchmark?.narrative || 'Generate a UX snapshot to see category context.'}</p>
       </div>
       <div class="observeux-card">
         <h4>Friction signals <span class="${confidenceClass('medium')}">(medium)</span></h4>
         <ul class="observeux-list">${renderList(friction, (item) => item.text)}</ul>
       </div>
       <div class="observeux-card">
-        <h4>AI suggestions <span class="${confidenceClass('advisory')}">(advisory)</span></h4>
+        <h4>Advisory suggestions <span class="${confidenceClass('advisory')}">(advisory)</span></h4>
         <ul class="observeux-list">${renderList(suggestions, (item) => item.text)}</ul>
       </div>
       ${benchmarkBlock}
@@ -417,31 +685,29 @@
     body.innerHTML = `
       ${renderEvidenceBanner(detection, h)}
       <div class="observeux-card">
-        <h4>Category benchmark <span class="${confidenceClass('medium')}">(medium confidence)</span></h4>
+        <h4>${benchmarkHeading(h, detection)} <span class="${confidenceClass('medium')}">(medium confidence)</span></h4>
         <p class="observeux-disclosure">${h.categoryBenchmark?.narrative || 'Insufficient visible evidence.'}</p>
       </div>
       <div class="observeux-card">
-        <h4>Observed features <span class="${confidenceClass('high')}">(high confidence)</span></h4>
-        <div>
-          ${(h.observableFeatures || [])
-            .map((f) => `<span class="observeux-chip">${featureLabel(f)} (${f.count})</span>`)
-            .join('')}
+        <h4>Visible patterns <span class="${confidenceClass('high')}">(high confidence)</span></h4>
+        <div class="observeux-chip-row">
+          ${renderFeatureChips(h.observableFeatures)}
         </div>
       </div>
       <div class="observeux-card">
-        <h4>Prominent features <span class="${confidenceClass('medium')}">(medium confidence)</span></h4>
-        <ul class="observeux-list">${renderList(h.prominentFeatures, (item) => featureLabel(item))}</ul>
+        <h4>Standout patterns <span class="${confidenceClass('medium')}">(medium confidence)</span></h4>
+        <ul class="observeux-list observeux-clickable-list">${renderClickableFeatureList(h.prominentFeatures)}</ul>
       </div>
       <div class="observeux-card">
-        <h4>Missing / weak features <span class="${confidenceClass('medium')}">(medium confidence)</span></h4>
-        <ul class="observeux-list">${renderList(h.missingWeakFeatures, (item) => featureLabel(item))}</ul>
+        <h4>Pattern gaps <span class="${confidenceClass('medium')}">(medium confidence)</span></h4>
+        <ul class="observeux-list observeux-clickable-list">${renderClickableFeatureList(h.missingWeakFeatures)}</ul>
       </div>
       <div class="observeux-card">
-        <h4>Heuristic insights <span class="${confidenceClass('medium')}">(medium confidence)</span></h4>
+        <h4>UX observations <span class="${confidenceClass('medium')}">(medium confidence)</span></h4>
         <ul class="observeux-list">${renderList(h.heuristicInsights, (item) => item.text)}</ul>
       </div>
       <div class="observeux-card">
-        <h4>AI suggestions <span class="${confidenceClass('advisory')}">(advisory)</span></h4>
+        <h4>Advisory suggestions <span class="${confidenceClass('advisory')}">(advisory)</span></h4>
         <ul class="observeux-list">${renderList(ai.aiSuggestions, (item) => item.text)}</ul>
       </div>
     `;
@@ -449,6 +715,7 @@
     briefCache.result = result;
     applyResultantSynthesis(result);
     updateBriefButtonState(panelFromDom());
+    closeDetailDrawer(panelFromDom());
   }
 
   function panelFromDom() {
@@ -462,7 +729,7 @@
     const hasData = Boolean(briefCache.result || briefCache.benchmark?.ok);
     copyBtn.title = hasData
       ? 'Copy markdown brief to clipboard'
-      : 'Runs analyze if needed, then copies a paste-ready brief';
+      : 'Generates a snapshot if needed, then copies a paste-ready brief';
     copyBtn.disabled = false;
   }
 
@@ -560,16 +827,16 @@
     });
 
     analyzeBtn.addEventListener('click', async () => {
-      analyzeBtn.textContent = 'Analyzing...';
+      analyzeBtn.textContent = 'Generating snapshot…';
       await openAssistantPanel(panel);
       const result = await globalScope.ObserveUXOrchestrator.runSingleAnalysis();
       applyResults(result);
-      analyzeBtn.textContent = 'Analyze Page';
+      analyzeBtn.textContent = 'Generate UX Snapshot';
     });
 
     addUrlBtn.addEventListener('click', async () => {
       if (globalScope.RedzeUXEntitlements && !(await globalScope.RedzeUXEntitlements.canUseCompare())) {
-        showProToast(panel, 'Compare sites');
+        showProToast(panel, 'Compare competitors');
         return;
       }
       const input = panel.querySelector('#observeux-url-input');
@@ -585,6 +852,33 @@
     });
 
     panel.addEventListener('click', async (event) => {
+      if (event.target.closest('.observeux-detail-close')) {
+        closeDetailDrawer(panel);
+        return;
+      }
+      if (event.target.closest('[data-evidence-detail]')) {
+        const drawer = panel.querySelector('#observeux-detail-drawer');
+        const evidenceOpen = drawer && !drawer.classList.contains('hidden');
+        const headerText = drawer?.querySelector('.observeux-detail-header strong')?.textContent || '';
+        if (evidenceOpen && headerText.includes('What we can see')) {
+          closeDetailDrawer(panel);
+        } else {
+          showEvidenceDetail(panel);
+        }
+        return;
+      }
+      const featureBtn = event.target.closest('.observeux-chip-btn, .observeux-list-btn');
+      if (featureBtn) {
+        const featureKey = featureBtn.getAttribute('data-feature');
+        if (featureKey) {
+          if (featureBtn.classList.contains('is-active')) {
+            closeDetailDrawer(panel);
+          } else {
+            showFeatureDetail(panel, featureKey);
+          }
+        }
+        return;
+      }
       const removeButton = event.target.closest('.observeux-remove-url');
       if (removeButton) {
         const url = removeButton.getAttribute('data-url');
@@ -600,7 +894,7 @@
 
     compareSelectedBtn.addEventListener('click', async () => {
       if (globalScope.RedzeUXEntitlements && !(await globalScope.RedzeUXEntitlements.canUseCompare())) {
-        showProToast(panel, 'Compare sites');
+        showProToast(panel, 'Compare competitors');
         return;
       }
       const selected = Array.from(panel.querySelectorAll('#observeux-url-list input:checked')).map(
@@ -611,13 +905,13 @@
         { type: 'OBSERVEUX_COMPARE_SITES', selectedUrls: selected },
         (response) => {
           if (!response?.ok) {
-            alert(response?.message || 'Comparison failed.');
+            alert(response?.message || 'Competitor compare failed.');
             return;
           }
           const summaryCard = panel.querySelector('.observeux-compare-summary');
           summaryCard.textContent = '';
           const summaryStrong = document.createElement('strong');
-          summaryStrong.textContent = 'Compare summary:';
+          summaryStrong.textContent = 'Competitor snapshot:';
           summaryCard.appendChild(summaryStrong);
           summaryCard.appendChild(
             document.createTextNode(` ${response.summaryText || 'Insufficient visible evidence.'}`)
@@ -703,7 +997,7 @@
       <div class="observeux-assistant-body">
         <div class="observeux-card">
           <h4>Results Snapshot</h4>
-          <p class="observeux-disclosure">Run Analyze Page or Compare Selected to populate results.</p>
+          <p class="observeux-disclosure">Generate a UX snapshot or compare competitors to populate results.</p>
         </div>
       </div>
     `;
@@ -762,11 +1056,11 @@
       </div>
       <div class="observeux-body">
         <div class="observeux-action-row">
-          <button id="observeux-analyze-page" class="observeux-btn observeux-primary">Analyze Page</button>
+          <button id="observeux-analyze-page" class="observeux-btn observeux-primary">Generate UX Snapshot</button>
         </div>
         <div class="observeux-action-row">
           <button id="observeux-copy-brief" class="observeux-btn observeux-hook" type="button" title="Paste-ready brief for Slack, Notion, or email">
-            Copy Executive Brief
+            Copy Brief
           </button>
         </div>
         <div id="observeux-export-card" class="observeux-card observeux-export-card">
@@ -781,13 +1075,13 @@
           </div>
         </div>
         <div class="observeux-card observeux-disclosure">
-          AI suggestions are advisory. Visible UI only — you synthesize and decide.
+          Advisory suggestions only. Visible UI — you synthesize and decide.
         </div>
         <div class="observeux-results"></div>
         <div id="observeux-compare-card" class="observeux-card observeux-compare-card">
-          <h4>Compare Sites (Pro / Agency · up to 5)</h4>
+          <h4>Compare Competitors (Pro / Agency · up to 5)</h4>
           <p id="observeux-compare-lock" class="observeux-disclosure observeux-pro-lock">
-            Save competitor URLs and run side-by-side teardowns. Unlock in extension Options.
+            Save competitor URLs and run side-by-side snapshots. Unlock in extension Options.
           </p>
           <div class="observeux-compare-row">
             <input id="observeux-url-input" type="url" placeholder="https://example.com" />
@@ -795,11 +1089,11 @@
           </div>
           <ul id="observeux-url-list" class="observeux-url-list"></ul>
           <div class="observeux-action-row">
-            <button id="observeux-compare-selected" class="observeux-btn">Compare Selected</button>
+            <button id="observeux-compare-selected" class="observeux-btn">Compare Competitors</button>
             <button id="observeux-remove-selected" class="observeux-btn">Remove Selected</button>
           </div>
           <button id="observeux-clear-urls" class="observeux-btn">Clear List</button>
-          <div class="observeux-card observeux-compare-summary">Select at least 2 sites and click Compare Selected.</div>
+          <div class="observeux-card observeux-compare-summary">Select at least 2 sites and click Compare Competitors.</div>
         </div>
         <p class="observeux-doctrine-footer">For the people · Local only · Always.</p>
       </div>

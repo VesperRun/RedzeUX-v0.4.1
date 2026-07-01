@@ -36,8 +36,10 @@
 
   const MAX_SHADOW_DEPTH = 3;
   const MAX_NODES_SCANNED = 2800;
+  const MAX_MATCHES_PER_FEATURE = 12;
 
   let nodesScanned = 0;
+  let matchesCollected = 0;
 
   function isVisible(el) {
     if (!el || !(el instanceof Element)) return false;
@@ -49,7 +51,36 @@
     return rect.width > 0 && rect.height > 0 && rect.bottom >= 0 && rect.top <= window.innerHeight * 1.5;
   }
 
-  function queryVisibleInRoot(root, selector) {
+  function truncate(text, max = 80) {
+    return String(text || '')
+      .replace(/[\r\n\t]+/g, ' ')
+      .trim()
+      .slice(0, max);
+  }
+
+  function summarizeElement(el, selector, source) {
+    const tag = el.tagName.toLowerCase();
+    const aria = el.getAttribute('aria-label');
+    const placeholder = el.getAttribute('placeholder');
+    const href = el.getAttribute('href');
+    const role = el.getAttribute('role');
+    const text = truncate(el.innerText || el.textContent || '', 72);
+    let label = aria || placeholder || '';
+    if (!label && text) label = text;
+    if (!label && href) label = href;
+    if (!label && role) label = `role=${role}`;
+    if (!label) label = `<${tag}>`;
+
+    return {
+      tag,
+      label: truncate(label, 80),
+      selector: truncate(selector, 80),
+      source: source.type,
+      host: source.hostTag || null
+    };
+  }
+
+  function queryVisibleInRoot(root, selector, onMatch) {
     let count = 0;
     if (nodesScanned >= MAX_NODES_SCANNED) return 0;
     try {
@@ -57,7 +88,10 @@
       for (let i = 0; i < nodes.length; i += 1) {
         if (nodesScanned >= MAX_NODES_SCANNED) break;
         nodesScanned += 1;
-        if (isVisible(nodes[i])) count += 1;
+        if (isVisible(nodes[i])) {
+          count += 1;
+          if (onMatch) onMatch(nodes[i]);
+        }
       }
     } catch (err) {
       // Invalid selector in some roots — skip safely.
@@ -65,7 +99,7 @@
     return count;
   }
 
-  function walkShadowRoots(root, depth, stats) {
+  function walkShadowRoots(root, depth, stats, hostSummaries, seenHosts) {
     if (depth >= MAX_SHADOW_DEPTH || nodesScanned >= MAX_NODES_SCANNED) return;
     try {
       const hosts = root.querySelectorAll('*');
@@ -77,7 +111,17 @@
         const shadow = host.shadowRoot;
         if (!shadow) continue;
         stats.openShadowRoots += 1;
-        walkShadowRoots(shadow, depth + 1, stats);
+        const hostTag = host.tagName.toLowerCase();
+        const hostKey = `${hostTag}:${host.id || host.className || i}`;
+        if (hostSummaries && seenHosts && !seenHosts.has(hostKey) && hostSummaries.length < 24) {
+          seenHosts.add(hostKey);
+          hostSummaries.push({
+            tag: hostTag,
+            id: truncate(host.id || '', 40) || null,
+            classes: truncate((host.className || '').toString(), 60) || null
+          });
+        }
+        walkShadowRoots(shadow, depth + 1, stats, hostSummaries, seenHosts);
       }
     } catch (err) {
       // Continue without shadow subtree.
@@ -100,38 +144,52 @@
     return Math.min(closed, 50);
   }
 
-  function safeCount(selectorList, roots) {
+  function safeCount(selectorList, entries, featureKey, featureMatches) {
     let total = 0;
+    const matches = [];
     selectorList.forEach((selector) => {
-      roots.forEach((root) => {
-        total += queryVisibleInRoot(root, selector);
+      entries.forEach((entry) => {
+        total += queryVisibleInRoot(entry.root, selector, (el) => {
+          if (matches.length >= MAX_MATCHES_PER_FEATURE) return;
+          if (matchesCollected >= MAX_MATCHES_PER_FEATURE * 24) return;
+          matches.push(summarizeElement(el, selector, entry));
+          matchesCollected += 1;
+        });
       });
     });
+    if (matches.length > 0) {
+      featureMatches[featureKey] = matches;
+    }
     return total;
   }
 
   function getSearchRoots() {
-    const roots = [document];
+    const entries = [{ root: document, type: 'page', hostTag: null }];
     const stats = { openShadowRoots: 0 };
-    walkShadowRoots(document, 0, stats);
-    // Collect open shadow roots one level deep for querying (bounded).
+    const hostSummaries = [];
+    const seenHosts = new Set();
+    walkShadowRoots(document, 0, stats, hostSummaries, seenHosts);
     try {
       document.querySelectorAll('*').forEach((el) => {
-        if (el.shadowRoot && roots.length < 12) {
-          roots.push(el.shadowRoot);
+        if (el.shadowRoot && entries.length < 12) {
+          entries.push({
+            root: el.shadowRoot,
+            type: 'shadow',
+            hostTag: el.tagName.toLowerCase()
+          });
         }
       });
     } catch (err) {
       // Ignore.
     }
-    return { roots, stats };
+    return { entries, stats, hostSummaries };
   }
 
-  function repeatedStructureScore(roots) {
+  function repeatedStructureScore(entries) {
     const classMap = new Map();
-    roots.forEach((root) => {
+    entries.forEach((entry) => {
       try {
-        root.querySelectorAll('section, article, li, div').forEach((node) => {
+        entry.root.querySelectorAll('section, article, li, div').forEach((node) => {
           if (!isVisible(node)) return;
           const key = (node.className || '').toString().trim();
           if (!key || key.length < 4) return;
@@ -174,19 +232,30 @@
     return 'light_dom';
   }
 
+  function buildEvidenceScopeLabel(scope) {
+    const labels = {
+      light_dom: 'Light DOM',
+      light_dom_plus_open_shadow: 'Light DOM + open shadow',
+      light_dom_closed_shadow_limited: 'Light DOM (closed shadow limited)'
+    };
+    return labels[scope] || scope.replace(/_/g, ' ');
+  }
+
   function detectFeatures() {
     nodesScanned = 0;
-    const { roots, stats: shadowStats } = getSearchRoots();
+    matchesCollected = 0;
+    const { entries, stats: shadowStats, hostSummaries } = getSearchRoots();
     const closedHosts = countClosedShadowHosts();
 
     const featureCounts = {};
+    const featureMatches = {};
     Object.entries(SELECTORS).forEach(([feature, selectors]) => {
-      featureCounts[feature] = safeCount(selectors, roots);
+      featureCounts[feature] = safeCount(selectors, entries, feature, featureMatches);
     });
 
     const ctaCount = featureCounts.cta || 0;
-    const headingCount = safeCount(['h1', 'h2', 'h3'], roots);
-    const formCount = safeCount(['form', 'input', 'textarea', 'select'], roots);
+    const headingCount = safeCount(['h1', 'h2', 'h3'], entries, '_headings', featureMatches);
+    const formCount = safeCount(['form', 'input', 'textarea', 'select'], entries, '_forms', featureMatches);
 
     const evidenceScope = buildEvidenceScope(shadowStats, closedHosts);
 
@@ -196,12 +265,21 @@
       timestamp: new Date().toISOString(),
       siteType: estimateSiteType(featureCounts),
       featureCounts,
+      featureMatches,
       featureDensityScore: Math.min(100, Math.round((ctaCount + formCount + headingCount) * 1.6)),
-      repeatedStructureScore: repeatedStructureScore(roots),
+      repeatedStructureScore: repeatedStructureScore(entries),
       ctaCount,
       headingCount,
       formCount,
       evidenceScope,
+      evidenceScopeLabel: buildEvidenceScopeLabel(evidenceScope),
+      evidenceDetails: {
+        openShadowHosts: hostSummaries,
+        closedShadowHostsEstimated: closedHosts,
+        shadowRegionsScanned: shadowStats.openShadowRoots,
+        iframesExcluded: true,
+        credentialsExcluded: true
+      },
       observationLimits: {
         openShadowRootsScanned: shadowStats.openShadowRoots,
         closedShadowHostsEstimated: closedHosts,
@@ -215,6 +293,9 @@
   }
 
   globalScope.ObserveUXDomDetector = {
-    detectFeatures
+    detectFeatures,
+    getFeatureSelectors(featureKey) {
+      return SELECTORS[featureKey] ? [...SELECTORS[featureKey]] : [];
+    }
   };
 })(window);
