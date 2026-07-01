@@ -29,6 +29,18 @@ Webhook `checkout.session.completed` → `RZX-PRO-*` + Resend email.
 
 Optional metadata `redzeux_tier=agency` on checkout for agency one-time products.
 
+## Pro refunds (operator)
+
+Policy lives in **`../billing-config.js`** → `refundPolicy.environmentalFeeUsd`.
+
+On approved 14-day guarantee refund:
+
+1. Issue partial Stripe refund: `computeProRefundBreakdown(amount).netRefund`
+2. Deactivate license key in your store / DB
+3. Retained amount covers environmental/handling + non-recoverable Stripe fees
+
+Payment Link / checkout copy must disclose guarantee deductions (see **`../PRICING.md`**).
+
 ## Env
 
 See `.env.example` — `STRIPE_*`, `RESEND_*`, `ADMIN_SECRET`, `LICENSE_VERIFY_ORIGINS`.

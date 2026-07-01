@@ -137,6 +137,12 @@ input[type='password'] {
   font-size: 12px;
 }
 
+.guarantee-note {
+  border-left: 3px solid rgba(72, 88, 200, 0.45);
+  padding-left: 10px;
+  margin: 8px 0;
+}
+
 .fine {
   margin: 8px 0 0;
   font-size: 11px;

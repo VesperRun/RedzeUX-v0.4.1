@@ -56,6 +56,32 @@ Do **not** merge these into one confused SKU. Separate Stripe products, separate
 
 **Buyer message:** *“One client export pays for months of Pro.”*
 
+### Pro money-back guarantee (14 days)
+
+Try Pro on real work. If it is not worth keeping within **14 days** of your **first Pro payment**, contact support for an approved refund.
+
+**Refund amount**
+
+```text
+Refund = First Pro payment
+       − Environmental / handling charge (operator-set; default $8 USD)
+       − Non-recoverable Stripe processing fees on that payment
+```
+
+- **Environmental / handling charge** — set in `billing-config.js` → `refundPolicy.environmentalFeeUsd`. Covers operator labor, handling, and infrastructure when processing a return (the laborer is worthy of his hire).
+- **Stripe fees** — payment processors typically do not return their fee when we refund you; that cost is deducted from the refund total.
+- **License** — revoked on refund. One cash refund per customer unless agreed otherwise.
+- **Agency kit** — not covered by this self-serve guarantee; manual kit terms apply.
+
+**Examples (default $8 environmental fee)**
+
+| First payment | ~Stripe fee | ~You receive back |
+|---------------|-------------|-------------------|
+| $24 (monthly) | ~$1.00 | ~$15.00 |
+| $199 (annual) | ~$6.07 | ~$184.93 |
+
+Adjust `environmentalFeeUsd` in `billing-config.js` before launch. Must match checkout and store copy.
+
 ---
 
 ## Agency (Kit) — flat fee + maintenance

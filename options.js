@@ -21,6 +21,8 @@ const aiMessage = document.getElementById('ai-message');
 const brandAgency = document.getElementById('brand-agency');
 const brandPrepared = document.getElementById('brand-prepared');
 const brandMessage = document.getElementById('brand-message');
+const proGuarantee = document.getElementById('pro-guarantee');
+const proRefundExample = document.getElementById('pro-refund-example');
 
 function renderHybridLanes() {
   if (!globalThis.RedzeUXHybrid?.laneSummary) return;
@@ -79,6 +81,16 @@ function configureAgencyContact() {
   agencyContact.textContent = `Agency kit inquiries: ${email}`;
 }
 
+function configureProGuarantee() {
+  if (!proGuarantee || !globalThis.RedzeUXBilling?.formatProGuaranteeSummary) return;
+  proGuarantee.textContent = RedzeUXBilling.formatProGuaranteeSummary();
+  if (proRefundExample && RedzeUXBilling.formatProRefundExample) {
+    const monthly = RedzeUXBilling.formatProRefundExample(24);
+    const annual = RedzeUXBilling.formatProRefundExample(199);
+    proRefundExample.textContent = `${monthly} ${annual}`;
+  }
+}
+
 async function loadBrandSettings() {
   if (!globalThis.RedzeUXExport) return;
   const brand = await RedzeUXExport.getBrandSettings();
@@ -90,6 +102,7 @@ async function loadSettings() {
   renderHybridLanes();
   configureStripeButton();
   configureAgencyContact();
+  configureProGuarantee();
   licenseInput.value = await RedzeUXEntitlements.getLicenseKey();
 
   chrome.storage.local.get(Object.values(AI_KEYS), (result) => {

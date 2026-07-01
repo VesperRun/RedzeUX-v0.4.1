@@ -23,6 +23,8 @@
       <section class="card">
         <h2>Pro — Teardown ($24/mo · $199/yr)</h2>
         <p class="hint">Self-serve Stripe subscription. Unlimited briefs, compare, exports, BYOK AI.</p>
+        <p id="pro-guarantee" class="hint guarantee-note" aria-live="polite"></p>
+        <p id="pro-refund-example" class="fine"></p>
         <button id="upgrade-stripe" class="btn primary">Upgrade with Stripe</button>
         <p id="stripe-hint" class="hint hidden">Set <code>stripePaymentLink</code> in <code>billing-config.js</code>.</p>
         <button id="manage-billing" class="btn hidden">Manage subscription (Stripe)</button>
@@ -87,6 +89,7 @@
     </main>
     <script src="hybrid-schema.js"></script>
     <script src="billing-config.js"></script>
+    <!-- billing-config.js must load before options.js (refund policy copy) -->
     <script src="entitlements.js"></script>
     <script src="export-report.js"></script>
     <script src="options.js"></script>
