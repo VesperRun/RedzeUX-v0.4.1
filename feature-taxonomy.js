@@ -44,14 +44,6 @@
     marketplace: ['search', 'navigation', 'filters', 'reviews', 'auth']
   };
 
-  const EXPECTED_BY_SITE_TYPE = {
-    ecommerce: ['search', 'navigation', 'cart', 'checkout', 'reviews', 'support'],
-    saas_or_web_app: ['navigation', 'auth', 'pricing', 'support', 'onboarding'],
-    simple_marketing_site: ['navigation', 'cta', 'pricing', 'support'],
-    general_web_app: ['navigation', 'search', 'support', 'auth'],
-    marketplace: ['search', 'navigation', 'filters', 'reviews', 'auth']
-  };
-
   /** Plain-language context for why a site type has a benchmark baseline. */
   const SITE_TYPE_GAP_CONTEXT = {
     marketplace: {
