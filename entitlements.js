@@ -189,6 +189,10 @@
     return getStoredTier();
   }
 
+  function preLaunchGatesOpen() {
+    return Boolean(hybrid().PRE_LAUNCH_GATES_OPEN);
+  }
+
   async function isPaid() {
     const tier = await getTier();
     return tier === TIERS().PRO || tier === TIERS().AGENCY;
@@ -203,6 +207,7 @@
   }
 
   async function hasCapability(cap) {
+    if (preLaunchGatesOpen()) return true;
     const caps = hybrid().CAPABILITIES || {};
     const allowed = caps[cap];
     if (!Array.isArray(allowed)) return false;
@@ -230,6 +235,11 @@
     return true;
   }
 
+  async function shouldApplyBriefWatermark() {
+    if (preLaunchGatesOpen()) return false;
+    return !(await isPaid());
+  }
+
   async function canUseCompare() {
     return hasCapability('compare');
   }
@@ -243,6 +253,11 @@
   }
 
   async function canCopyBrief() {
+    if (preLaunchGatesOpen()) {
+      const tier = await getTier();
+      return { ok: true, remaining: Infinity, tier };
+    }
+
     if (await hasCapability('unlimitedBriefs')) {
       const tier = await getTier();
       return { ok: true, remaining: Infinity, tier };
@@ -273,6 +288,7 @@
   }
 
   async function recordBriefCopy() {
+    if (preLaunchGatesOpen()) return;
     if (await hasCapability('unlimitedBriefs')) return;
 
     const today = new Date().toISOString().slice(0, 10);
@@ -345,8 +361,10 @@
     isPro,
     isAgency,
     isLicenseValid,
+    preLaunchGatesOpen,
     hasCapability,
     getTierLabel,
+    shouldApplyBriefWatermark,
     canUseCompare,
     canUseRemoteAi,
     canUseExport,

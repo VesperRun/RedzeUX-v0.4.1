@@ -1,7 +1,7 @@
 // service_worker.js
 // Popup routing, comparison workflow, panel persistence, and script injection recovery.
 
-import { buildComparisonBenchmark, findTabForUrl } from './comparison-benchmark.js';
+import { buildComparisonBenchmark, compareHost, findTabForUrl, normalizeUrl } from './comparison-benchmark.js';
 
 const MAX_COMPARE_SITES = 5;
 const CONTENT_SCRIPT_FILES = [
@@ -135,28 +135,70 @@ async function getComparisonUrls() {
   });
 }
 
-async function collectComparisonSummaries(selectedUrls) {
+async function snapshotTabWithRecovery(tabId) {
+  let response = await sendMessageToTab(tabId, { type: 'OBSERVEUX_GET_COMPACT_SUMMARY' });
+  if (response?.ok) return response;
+
+  if (!shouldInjectScripts(response?.error)) return response;
+  const injected = await injectContentScripts(tabId);
+  if (!injected) return response;
+
+  return sendMessageToTab(tabId, { type: 'OBSERVEUX_GET_COMPACT_SUMMARY' });
+}
+
+function mergeCompareUrls(urls, prependUrls = []) {
+  const seen = new Set();
+  const out = [];
+  for (const raw of [...prependUrls, ...urls]) {
+    const host = compareHost(raw);
+    if (!host || seen.has(host)) continue;
+    seen.add(host);
+    out.push(normalizeUrl(raw));
+  }
+  return out;
+}
+
+async function collectComparisonSummaries(selectedUrls, senderTabId) {
   const stored = await getComparisonUrls();
-  const urls = Array.isArray(selectedUrls) && selectedUrls.length > 0 ? selectedUrls : stored;
+  const picked = Array.isArray(selectedUrls) && selectedUrls.length > 0 ? selectedUrls : stored;
+
+  let prepend = [];
+  if (typeof senderTabId === 'number') {
+    try {
+      const senderTab = await chrome.tabs.get(senderTabId);
+      if (senderTab?.url && isSupportedUrl(senderTab.url)) {
+        prepend = [senderTab.url];
+      }
+    } catch (error) {
+      // Sender tab unavailable — continue with selected URLs only.
+    }
+  }
+
+  const urls = mergeCompareUrls(picked, prepend);
   if (urls.length < 2) {
-    return { ok: false, message: 'Add at least 2 URLs for comparison.' };
+    return {
+      ok: false,
+      message: 'Add at least 1 competitor URL — this page counts as one site in the compare.'
+    };
   }
 
   const tabs = await queryAllTabs();
   const results = [];
+  const usedTabIds = new Set();
 
   for (const url of urls) {
-    const existingTab = findTabForUrl(tabs, url);
+    const existingTab = findTabForUrl(tabs, url, usedTabIds);
     if (!existingTab || typeof existingTab.id !== 'number') {
       results.push({
         url,
         status: 'not-open',
-        note: 'Open this URL in a tab, then click Compare Competitors.'
+        note: 'Open this site in a tab (any page on the domain), then compare again.'
       });
       continue;
     }
 
-    const response = await sendMessageToTab(existingTab.id, { type: 'OBSERVEUX_GET_COMPACT_SUMMARY' });
+    usedTabIds.add(existingTab.id);
+    const response = await snapshotTabWithRecovery(existingTab.id);
     if (!response.ok) {
       results.push({
         url,
@@ -166,10 +208,26 @@ async function collectComparisonSummaries(selectedUrls) {
       continue;
     }
     results.push({
-      url,
+      url: existingTab.url || url,
       status: 'ok',
       analysis: response.result
     });
+  }
+
+  const readyCount = results.filter((item) => item.status === 'ok').length;
+  const notOpen = results.filter((item) => item.status === 'not-open');
+
+  if (readyCount < 2) {
+    const hosts = notOpen.map((item) => compareHost(item.url) || item.url);
+    const hostHint =
+      hosts.length > 0
+        ? ` Open a tab for: ${hosts.join(', ')} (homepage or any page on that site).`
+        : '';
+    return {
+      ok: false,
+      message: `Need 2+ sites snapshotted for a compare.${hostHint}`,
+      results
+    };
   }
 
   const benchmark = buildComparisonBenchmark(results);
@@ -217,7 +275,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message.type === 'OBSERVEUX_COMPARE_SITES') {
-    collectComparisonSummaries(message.selectedUrls).then((result) => sendResponse(result));
+    collectComparisonSummaries(message.selectedUrls, sender?.tab?.id).then((result) => sendResponse(result));
     return true;
   }
 });

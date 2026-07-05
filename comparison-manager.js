@@ -7,14 +7,29 @@
   const LEGACY_KEY = 'observeux_comparison_urls';
   const LIMIT = 5;
 
+  function splitUrlInput(raw) {
+    return String(raw || '')
+      .split(/[\n,;]+/)
+      .map((part) => part.trim())
+      .filter(Boolean);
+  }
+
   function normalizeUrl(url) {
-    try {
-      const parsed = new URL(url);
-      parsed.hash = '';
-      return parsed.toString();
-    } catch (error) {
-      return null;
+    const trimmed = String(url || '').trim();
+    if (!trimmed) return null;
+
+    const candidates = trimmed.includes('://') ? [trimmed] : [`https://${trimmed}`, trimmed];
+    for (const candidate of candidates) {
+      try {
+        const parsed = new URL(candidate);
+        if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') continue;
+        parsed.hash = '';
+        return parsed.toString();
+      } catch (error) {
+        // try next candidate
+      }
     }
+    return null;
   }
 
   async function getUrls() {
@@ -40,20 +55,52 @@
   }
 
   async function addUrl(rawUrl) {
-    const normalized = normalizeUrl(rawUrl);
-    if (!normalized) {
+    const parts = splitUrlInput(rawUrl);
+    if (parts.length === 0) {
       return { ok: false, message: 'Please enter a valid URL.' };
     }
-    const current = await getUrls();
-    if (current.includes(normalized)) {
-      return { ok: false, message: 'This URL is already in your comparison list.' };
+
+    let current = await getUrls();
+    const added = [];
+    const invalid = [];
+
+    for (const part of parts) {
+      const normalized = normalizeUrl(part);
+      if (!normalized) {
+        invalid.push(part);
+        continue;
+      }
+      if (current.includes(normalized)) {
+        continue;
+      }
+      if (current.length >= LIMIT) {
+        break;
+      }
+      current = [...current, normalized];
+      added.push(normalized);
     }
-    if (current.length >= LIMIT) {
-      return { ok: false, message: 'You can save up to 5 URLs.' };
+
+    if (added.length === 0) {
+      if (invalid.length > 0) {
+        return { ok: false, message: 'Please enter a valid URL (e.g. sephora.com).' };
+      }
+      if (current.length >= LIMIT) {
+        return { ok: false, message: 'You can save up to 5 URLs.' };
+      }
+      return { ok: false, message: 'These URLs are already in your comparison list.' };
     }
-    const next = [...current, normalized];
-    await setUrls(next);
-    return { ok: true, urls: next };
+
+    await setUrls(current);
+
+    let message = `Added ${added.length} URL${added.length === 1 ? '' : 's'}.`;
+    if (invalid.length > 0) {
+      message += ` Skipped ${invalid.length} invalid entr${invalid.length === 1 ? 'y' : 'ies'}.`;
+    }
+    if (current.length >= LIMIT && parts.length > added.length) {
+      message += ' List is full (5 max).';
+    }
+
+    return { ok: true, urls: current, added, message };
   }
 
   async function removeUrl(url) {

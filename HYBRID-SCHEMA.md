@@ -26,7 +26,9 @@ Dev keys (local only): `RZX-PRO-VESPER-DEV`, `RZX-AGENCY-VESPER-DEV`
 
 Source of truth in code: `hybrid-schema.js` → `RedzeUXHybrid.CAPABILITIES`
 
-**Supporter differentiation:** `isPaid()` removes brief/export watermark. Capabilities are otherwise identical during early access.
+**Pre-launch override:** `hybrid-schema.js` → `PRE_LAUNCH_GATES_OPEN: true` unlocks every user-facing gate and removes watermarks for operator testing. Set **`false` before public launch**, then adjust `CAPABILITIES` and watermark behavior as needed.
+
+**Supporter differentiation (when gates closed):** `shouldApplyBriefWatermark()` / `isPaid()` remove brief/export watermark. Capabilities follow the matrix above.
 
 ## Storage (extension)
 

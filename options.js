@@ -59,7 +59,9 @@ function formatVerifyResult(result) {
 
 async function refreshTierStatus() {
   const label = await RedzeUXEntitlements.getTierLabel();
-  tierStatus.textContent = label;
+  tierStatus.textContent = RedzeUXEntitlements.preLaunchGatesOpen()
+    ? `${label} · all features unlocked (pre-launch testing)`
+    : label;
 
   const isProTier = await RedzeUXEntitlements.isPro();
   const portalConfigured = Boolean(RedzeUXEntitlements.getBillingPortalUrl());

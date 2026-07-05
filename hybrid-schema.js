@@ -16,6 +16,11 @@
 
   globalScope.RedzeUXHybrid = {
     TIERS,
+    /**
+     * Pre-launch testing: all user-facing gates open, no brief/export watermarks.
+     * Set to false before public launch, then tighten CAPABILITIES as needed.
+     */
+    PRE_LAUNCH_GATES_OPEN: true,
     LABELS: {
       [TIERS.FREE]: 'Free (Early Access)',
       [TIERS.PRO]: 'Supporter',

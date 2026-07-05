@@ -443,7 +443,7 @@
     const opts = options || {};
     let watermark = Boolean(opts.watermark);
     if (opts.watermark === undefined && globalScope.RedzeUXEntitlements) {
-      watermark = !(await globalScope.RedzeUXEntitlements.isPaid());
+      watermark = await globalScope.RedzeUXEntitlements.shouldApplyBriefWatermark();
     }
 
     const markdown = builder.buildBrief(result, briefCache.benchmark, { watermark });
@@ -501,8 +501,10 @@
     }
 
     try {
-      const paid = entitlements ? await entitlements.isPaid() : false;
-      const { markdown, meta } = await resolveBriefMarkdown(panel, { watermark: !paid });
+      const watermark = entitlements
+        ? await entitlements.shouldApplyBriefWatermark()
+        : false;
+      const { markdown, meta } = await resolveBriefMarkdown(panel, { watermark });
       if (format === 'md') {
         await exporter.exportMarkdown(markdown, meta);
         showToast(panel, 'Markdown report downloaded');
@@ -527,28 +529,46 @@
     const entitlements = globalScope.RedzeUXEntitlements;
     if (!entitlements) return;
 
-    const pro = await entitlements.isPaid();
     const compareCard = panel.querySelector('#observeux-compare-card');
     const compareLock = panel.querySelector('#observeux-compare-lock');
     const exportCard = panel.querySelector('#observeux-export-card');
     const exportLock = panel.querySelector('#observeux-export-lock');
     const copyBtn = panel.querySelector('#observeux-copy-brief');
 
+    if (entitlements.preLaunchGatesOpen()) {
+      compareCard?.classList.remove('observeux-pro-locked');
+      exportCard?.classList.remove('observeux-pro-locked');
+      compareLock?.classList.add('hidden');
+      exportLock?.classList.add('hidden');
+      if (copyBtn) copyBtn.textContent = 'Copy Brief';
+      return;
+    }
+
+    const paid = await entitlements.isPaid();
+    const canCompare = await entitlements.canUseCompare();
+    const canExport = await entitlements.canUseExport();
+
     if (compareCard) {
-      compareCard.classList.toggle('observeux-pro-locked', !pro);
+      compareCard.classList.toggle('observeux-pro-locked', !canCompare);
     }
     if (compareLock) {
-      compareLock.classList.toggle('hidden', pro);
+      compareLock.classList.toggle('hidden', canCompare);
     }
     if (exportCard) {
-      exportCard.classList.toggle('observeux-pro-locked', !pro);
+      exportCard.classList.toggle('observeux-pro-locked', !canExport);
     }
     if (exportLock) {
-      exportLock.classList.toggle('hidden', pro);
+      if (canExport && !paid) {
+        exportLock.textContent =
+          'Free exports include a brief footer watermark. Optional Supporter in Options removes it.';
+        exportLock.classList.remove('hidden');
+      } else {
+        exportLock.classList.toggle('hidden', canExport);
+      }
     }
 
     if (copyBtn) {
-      if (pro) {
+      if (paid) {
         copyBtn.textContent = 'Copy Brief';
       } else {
         const gate = await entitlements.canCopyBrief();
@@ -584,54 +604,121 @@
     `;
   }
 
-  function renderCompareMatrix(benchmark) {
-    if (!benchmark?.ok || !benchmark.matrix?.length) {
-      return '<p class="observeux-disclosure">No overlap matrix yet. Open compared URLs in tabs and click Compare Competitors again.</p>';
+  function pageHost(result) {
+    try {
+      return new URL(result?.detection?.url || window.location.href).hostname.replace(/^www\./i, '');
+    } catch (error) {
+      return 'this page';
     }
-    const topRows = benchmark.matrix
-      .filter((row) => row.presentCount > 0)
-      .sort((a, b) => b.presentCount - a.presentCount)
-      .slice(0, 12);
-    const rows = topRows
-      .map(
-        (row) => `
-        <tr>
-          <td>${row.label}</td>
-          <td>${row.coverage}</td>
-        </tr>
-      `
-      )
-      .join('');
-    return `
-      <table class="observeux-matrix">
-        <thead><tr><th>Pattern</th><th>Sites</th></tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
-    `;
+  }
+
+  function renderCompareMatrix(benchmark) {
+    if (!benchmark?.ok) {
+      return '<p class="observeux-disclosure">Compare could not build a matrix from the open tabs.</p>';
+    }
+
+    const sites = benchmark.sites || [];
+    const siteHosts = sites.map((site) => site.host);
+
+    let html = '';
+
+    if (sites.length > 0) {
+      html += '<div class="observeux-compare-sites">';
+      for (const site of sites) {
+        const visible =
+          site.featureLabels?.length > 0
+            ? site.featureLabels.slice(0, 10).join(' · ')
+            : 'No patterns detected — focus that tab and compare again.';
+        const gaps =
+          site.missingLabels?.length > 0
+            ? `<p class="observeux-disclosure observeux-compare-gap">Benchmark gaps: ${escapeHtml(site.missingLabels.slice(0, 6).join(' · '))}</p>`
+            : '';
+        html += `
+          <div class="observeux-compare-site">
+            <strong>${escapeHtml(site.host)}</strong>
+            <span class="observeux-disclosure"> · ${escapeHtml(site.siteTypeLabel || site.siteType)}</span>
+            <p class="observeux-disclosure">${escapeHtml(visible)}</p>
+            ${gaps}
+          </div>
+        `;
+      }
+      html += '</div>';
+    }
+
+    if (benchmark.gapsAcrossSites?.length > 0) {
+      html += '<h5 class="observeux-detail-subhead">Cross-site gaps</h5><ul class="observeux-list">';
+      for (const gap of benchmark.gapsAcrossSites.slice(0, 8)) {
+        html += `<li><strong>${escapeHtml(gap.label)}</strong> — ${escapeHtml(gap.coverage)} sites · missing on ${escapeHtml(gap.missingOn.join(', '))}</li>`;
+      }
+      html += '</ul>';
+    }
+
+    if (benchmark.uniqueBySite?.some((entry) => entry.unique.length > 0)) {
+      html += '<h5 class="observeux-detail-subhead">Distinct patterns</h5><ul class="observeux-list">';
+      for (const entry of benchmark.uniqueBySite) {
+        if (entry.unique.length === 0) continue;
+        html += `<li><strong>${escapeHtml(entry.host)}:</strong> ${escapeHtml(entry.unique.join(', '))}</li>`;
+      }
+      html += '</ul>';
+    }
+
+    const rows = (benchmark.matrix || []).filter((row) => row.presentCount > 0).slice(0, 14);
+    if (rows.length > 0 && siteHosts.length > 0) {
+      const head = siteHosts.map((host) => `<th>${escapeHtml(host)}</th>`).join('');
+      const body = rows
+        .map((row) => {
+          const cells = row.presence
+            .map((present) => `<td>${present ? '✓' : '—'}</td>`)
+            .join('');
+          return `<tr><td>${escapeHtml(row.label)}</td>${cells}</tr>`;
+        })
+        .join('');
+      html += `
+        <h5 class="observeux-detail-subhead">Pattern matrix</h5>
+        <table class="observeux-matrix observeux-matrix-compare">
+          <thead><tr><th>Pattern</th>${head}</tr></thead>
+          <tbody>${body}</tbody>
+        </table>
+      `;
+    } else if (sites.length > 0) {
+      html +=
+        '<p class="observeux-disclosure">No overlapping pattern keys yet — per-site reads above still apply.</p>';
+    }
+
+    return html;
   }
 
   function applyResultantSynthesis(result, benchmark) {
     const assistantBody = document.querySelector(`#${ASSISTANT_PANEL_ID} .observeux-assistant-body`);
     if (!assistantBody) return;
 
-    const h = result.heuristics;
-    const ai = result.ai;
+    const h = result?.heuristics;
+    const ai = result?.ai;
+    const detection = result?.detection;
+    const host = pageHost(result);
+    const pageTitle = detection?.title ? escapeHtml(detection.title.slice(0, 100)) : '';
     const suggestions = (ai?.aiSuggestions || []).slice(0, 4);
     const friction = (h?.possibleFrictionPoints || []).slice(0, 2);
-    const benchmarkBlock = benchmark
-      ? `
+    const benchmarkBlock =
+      benchmark?.ok
+        ? `
         <div class="observeux-card">
-          <h4>Competitor snapshot</h4>
-          <p class="observeux-disclosure">${benchmark.narrative || 'Insufficient visible evidence.'}</p>
+          <h4>Competitor compare (${benchmark.siteCount || benchmark.sites?.length || '?'} sites)</h4>
+          <p class="observeux-disclosure">${escapeHtml(benchmark.narrative || 'Insufficient visible evidence.')}</p>
           ${renderCompareMatrix(benchmark)}
         </div>
       `
-      : '';
+        : '';
 
     assistantBody.innerHTML = `
       <div class="observeux-card">
-        <h4>RedzeUX Resultant</h4>
+        <h4>RedzeUX Resultant — ${escapeHtml(host)}</h4>
+        ${pageTitle ? `<p class="observeux-disclosure observeux-page-title">${pageTitle}</p>` : ''}
         <p class="observeux-disclosure">${h?.categoryBenchmark?.narrative || 'Generate a UX snapshot to see category context.'}</p>
+      </div>
+      <div class="observeux-card">
+        <h4>Visible patterns here <span class="${confidenceClass('high')}">(high)</span></h4>
+        <div class="observeux-chip-row">${renderFeatureChips(h?.observableFeatures || [])}</div>
       </div>
       <div class="observeux-card">
         <h4>Friction signals <span class="${confidenceClass('medium')}">(medium)</span></h4>
@@ -714,7 +801,7 @@
     `;
 
     briefCache.result = result;
-    applyResultantSynthesis(result);
+    applyResultantSynthesis(result, briefCache.benchmark);
     updateBriefButtonState(panelFromDom());
     closeDetailDrawer(panelFromDom());
   }
@@ -742,13 +829,26 @@
       .map(
         (url) => `
         <li class="observeux-url-item">
-          <input type="checkbox" value="${url}" />
+          <input type="checkbox" value="${url}" checked />
           <span title="${url}">${url}</span>
           <button class="observeux-btn observeux-remove-url" data-url="${url}">Remove</button>
         </li>
       `
       )
       .join('');
+    updateCompareSummaryHint(urls.length);
+  }
+
+  function updateCompareSummaryHint(urlCount) {
+    const summaryCard = document.querySelector('#observeux-panel .observeux-compare-summary');
+    if (!summaryCard) return;
+    if (urlCount >= 1) {
+      summaryCard.textContent =
+        'This page is included. Open each checked competitor in a tab (any page on that site), then Compare.';
+    } else {
+      summaryCard.textContent =
+        'Add at least 1 competitor URL. This page counts as one site — open competitors in other tabs to compare.';
+    }
   }
 
   function attachDragging(panel, header) {
@@ -835,7 +935,9 @@
       analyzeBtn.textContent = 'Generate UX Snapshot';
     });
 
-    addUrlBtn.addEventListener('click', async () => {
+    addUrlBtn.addEventListener('click', async (event) => {
+      event.preventDefault();
+      event.stopPropagation();
       if (globalScope.RedzeUXEntitlements && !(await globalScope.RedzeUXEntitlements.canUseCompare())) {
         showProToast(panel, 'Compare competitors');
         return;
@@ -845,11 +947,14 @@
       if (!value) return;
       const outcome = await globalScope.ObserveUXComparisonManager.addUrl(value);
       if (!outcome.ok) {
-        alert(outcome.message);
+        showToast(panel, outcome.message);
         return;
       }
       input.value = '';
       await renderUrlList();
+      if (outcome.message) {
+        showToast(panel, outcome.message);
+      }
     });
 
     panel.addEventListener('click', async (event) => {
@@ -893,38 +998,47 @@
       await renderUrlList();
     });
 
-    compareSelectedBtn.addEventListener('click', async () => {
+    compareSelectedBtn.addEventListener('click', async (event) => {
+      event.preventDefault();
+      event.stopPropagation();
       if (globalScope.RedzeUXEntitlements && !(await globalScope.RedzeUXEntitlements.canUseCompare())) {
         showProToast(panel, 'Compare competitors');
         return;
       }
-      const selected = Array.from(panel.querySelectorAll('#observeux-url-list input:checked')).map(
+      let selected = Array.from(panel.querySelectorAll('#observeux-url-list input:checked')).map(
         (node) => node.value
       );
+      if (selected.length < 1) {
+        selected = await globalScope.ObserveUXComparisonManager.getUrls();
+      }
+      if (selected.length < 1) {
+        showToast(panel, 'Add at least 1 competitor URL. This page is included in the compare.');
+        return;
+      }
       await openAssistantPanel(panel);
       chrome.runtime.sendMessage(
         { type: 'OBSERVEUX_COMPARE_SITES', selectedUrls: selected },
         (response) => {
           if (!response?.ok) {
-            alert(response?.message || 'Competitor compare failed.');
+            showToast(panel, response?.message || 'Competitor compare failed.');
             return;
           }
-          const summaryCard = panel.querySelector('.observeux-compare-summary');
-          summaryCard.textContent = '';
-          const summaryStrong = document.createElement('strong');
-          summaryStrong.textContent = 'Competitor snapshot:';
-          summaryCard.appendChild(summaryStrong);
-          summaryCard.appendChild(
-            document.createTextNode(` ${response.summaryText || 'Insufficient visible evidence.'}`)
-          );
           if (response.benchmark) {
             briefCache.benchmark = response.benchmark;
             updateBriefButtonState(panel);
+            const summaryCard = panel.querySelector('.observeux-compare-summary');
+            if (summaryCard && response.benchmark.ok) {
+              summaryCard.innerHTML = `<strong>Compare ready</strong> — ${escapeHtml(response.benchmark.narrative || response.summaryText || '')}`;
+            }
             const orchestrator = globalScope.ObserveUXOrchestrator;
             if (orchestrator?.runSingleAnalysis) {
               orchestrator
                 .runSingleAnalysis()
-                .then((current) => applyResultantSynthesis(current, response.benchmark))
+                .then((current) => {
+                  briefCache.result = current;
+                  applyResults(current);
+                  applyResultantSynthesis(current, response.benchmark);
+                })
                 .catch(() => applyResultantSynthesis(null, response.benchmark));
             } else {
               applyResultantSynthesis(null, response.benchmark);
@@ -1065,8 +1179,8 @@
           </button>
         </div>
         <div id="observeux-export-card" class="observeux-card observeux-export-card">
-          <h4>Client export (Pro / Agency)</h4>
-          <p id="observeux-export-lock" class="observeux-disclosure observeux-pro-lock">
+          <h4>Client export</h4>
+          <p id="observeux-export-lock" class="observeux-disclosure observeux-pro-lock hidden">
             Branded .md, .txt, and print/PDF reports. Set agency name in Options.
           </p>
           <div class="observeux-action-row observeux-export-row">
@@ -1080,12 +1194,12 @@
         </div>
         <div class="observeux-results"></div>
         <div id="observeux-compare-card" class="observeux-card observeux-compare-card">
-          <h4>Compare Competitors (Pro / Agency · up to 5)</h4>
-          <p id="observeux-compare-lock" class="observeux-disclosure observeux-pro-lock">
+          <h4>Compare Competitors (up to 5)</h4>
+          <p id="observeux-compare-lock" class="observeux-disclosure observeux-pro-lock hidden">
             Save competitor URLs and run side-by-side snapshots. Unlock in extension Options.
           </p>
           <div class="observeux-compare-row">
-            <input id="observeux-url-input" type="url" placeholder="https://example.com" />
+            <input id="observeux-url-input" type="text" inputmode="url" autocomplete="off" placeholder="sephora.com or https://…" />
             <button id="observeux-add-url" class="observeux-btn">Add</button>
           </div>
           <ul id="observeux-url-list" class="observeux-url-list"></ul>
@@ -1094,7 +1208,7 @@
             <button id="observeux-remove-selected" class="observeux-btn">Remove Selected</button>
           </div>
           <button id="observeux-clear-urls" class="observeux-btn">Clear List</button>
-          <div class="observeux-card observeux-compare-summary">Select at least 2 sites and click Compare Competitors.</div>
+          <div class="observeux-card observeux-compare-summary">Add competitor URLs, open each site in a tab, then Compare. This page is included automatically.</div>
         </div>
         <p class="observeux-doctrine-footer">For the people · Local only · Always.</p>
       </div>
@@ -1122,6 +1236,7 @@
       await saveState();
       notifyPanelStateChange(true);
       await renderUrlList();
+      await applyTierUi(existing);
       return;
     }
     await createPanel();

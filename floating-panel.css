@@ -443,3 +443,40 @@
 .hidden {
   display: none !important;
 }
+
+.observeux-compare-sites {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.observeux-compare-site {
+  padding: 8px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.observeux-compare-gap {
+  margin-top: 4px;
+  font-size: 11px;
+  opacity: 0.9;
+}
+
+.observeux-page-title {
+  font-size: 11px;
+  opacity: 0.85;
+  margin: 0 0 6px;
+}
+
+.observeux-matrix-compare td,
+.observeux-matrix-compare th {
+  text-align: center;
+  font-size: 11px;
+}
+
+.observeux-matrix-compare td:first-child,
+.observeux-matrix-compare th:first-child {
+  text-align: left;
+}
