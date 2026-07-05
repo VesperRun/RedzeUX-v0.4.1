@@ -257,11 +257,15 @@
     }
 
     if (count >= limit) {
+      const price =
+        typeof hybrid().formatSupporterPrice === 'function'
+          ? hybrid().formatSupporterPrice()
+          : '$5/mo · $39/yr';
       return {
         ok: false,
         remaining: 0,
         tier: TIERS().FREE,
-        message: `Free tier: ${limit} brief copies/day. Upgrade to Pro ($24/mo) or Agency kit in Options.`
+        message: `Free tier: ${limit} brief copies/day. Optional Supporter (${price}) in Options removes limits and watermark.`
       };
     }
 

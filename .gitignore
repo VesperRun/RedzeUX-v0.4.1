@@ -5,3 +5,6 @@ Thumbs.db
 stripe/.env
 stripe/licenses.json
 stripe/node_modules/
+
+# Local-only operator docs (not for repo)
+agency/COMPETITIVE-UX-PRACTICE.txt

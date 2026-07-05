@@ -501,7 +501,8 @@
     }
 
     try {
-      const { markdown, meta } = await resolveBriefMarkdown(panel, { watermark: false });
+      const paid = entitlements ? await entitlements.isPaid() : false;
+      const { markdown, meta } = await resolveBriefMarkdown(panel, { watermark: !paid });
       if (format === 'md') {
         await exporter.exportMarkdown(markdown, meta);
         showToast(panel, 'Markdown report downloaded');
@@ -558,7 +559,7 @@
   }
 
   function showProToast(panel, feature) {
-    showToast(panel, `${feature} requires Pro or Agency — Options → upgrade or paste license key.`);
+    showToast(panel, `${feature} unavailable — reload the extension or open Options.`);
   }
 
   function renderEvidenceBanner(detection, heuristics) {

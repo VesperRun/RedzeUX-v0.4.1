@@ -42,16 +42,16 @@ If you enable a remote AI endpoint, you are responsible for that provider choice
 
 To the maximum extent permitted by law, Redze UX is provided "as is" without warranties, and liability is limited for indirect or consequential damages.
 
-## 9. Pro refunds (money-back guarantee)
+## 9. Supporter refunds (money-back guarantee)
 
-Pro (Teardown) subscriptions include a **14-day satisfaction guarantee** on your **first Pro payment** only, subject to the deductions below. Free Snapshot tier charges no fee and is not refundable. Agency kit sales use separate written terms.
+Supporter subscriptions include a **14-day satisfaction guarantee** on your **first Supporter payment** only, subject to the deductions below — **including the fixed environmental/handling charge; no exceptions**. Free Early Access tier charges no fee and is not refundable. Agency kit sales use separate written terms.
 
 If you request an approved refund within the guarantee window:
 
-1. We refund your first Pro payment **minus**:
-   - a fixed **environmental / handling charge** (operator-configured; see `billing-config.js` → `refundPolicy.environmentalFeeUsd`), and
+1. We refund your first Supporter payment **minus**:
+   - a fixed **environmental / handling charge** of **$8 USD** (operator-configured in `billing-config.js` → `refundPolicy.environmentalFeeUsd` — not waived), and
    - **non-recoverable payment processing fees** charged by Stripe on the original transaction (typically not returned to us when we issue a refund).
-2. Your Pro license key is **deactivated** upon refund.
+2. Your Supporter license key is **deactivated** upon refund.
 3. **One cash refund per customer** (email / Stripe customer) unless we agree otherwise in writing.
 
 Refunds are not available for abuse, repeated refund cycling, or violations of these terms. Agency and maintenance fees follow your invoice or kit agreement.
@@ -67,4 +67,4 @@ These terms may be updated. Continued use after updates constitutes acceptance o
 Before public release, set your support email in this file, `billing-config.js`, and the Chrome Web Store listing.
 
 - Email: support@redzeux.local *(placeholder — allowance A-010)*
-- Refund requests: same email, subject line **Pro refund**, include purchase email and date.
+- Refund requests: same email, subject line **Supporter refund**, include purchase email and date.

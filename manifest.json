@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Redze UX - Privacy-First UX Snapshots",
-  "description": "Hybrid local-first UX snapshots — Free · Pro · Agency. Advisory, visible UI only.",
+  "description": "Local-first competitive UX snapshots — free during early access · optional Supporter tier.",
   "version": "0.4.1",
   "action": {
     "default_title": "Redze UX",

@@ -1,4 +1,4 @@
-// options.js — Hybrid lanes: Free · Pro · Agency
+// options.js — Launch lanes: Free (early access) · Supporter
 
 const AI_KEYS = {
   aiEnabled: 'observeux_ai_enabled',
@@ -8,12 +8,12 @@ const AI_KEYS = {
 
 const tierStatus = document.getElementById('tier-status');
 const laneList = document.getElementById('lane-list');
+const supporterHeading = document.getElementById('supporter-heading');
 const licenseInput = document.getElementById('license-key');
 const licenseMessage = document.getElementById('license-message');
 const stripeHint = document.getElementById('stripe-hint');
 const upgradeStripeBtn = document.getElementById('upgrade-stripe');
 const manageBillingBtn = document.getElementById('manage-billing');
-const agencyContact = document.getElementById('agency-contact');
 const aiEnabled = document.getElementById('ai-enabled');
 const aiEndpoint = document.getElementById('ai-endpoint');
 const aiApiKey = document.getElementById('ai-api-key');
@@ -26,7 +26,7 @@ const proRefundExample = document.getElementById('pro-refund-example');
 
 function renderHybridLanes() {
   if (!globalThis.RedzeUXHybrid?.laneSummary) return;
-  laneList.innerHTML = RedzeUXHybrid.laneSummary()
+  laneList.innerHTML = RedzeUXHybrid.laneSummary({ publicOnly: true })
     .map(
       (lane) =>
         `<li><strong>${lane.label}</strong> <span class="lane-price">${lane.price}</span></li>`
@@ -36,12 +36,12 @@ function renderHybridLanes() {
 
 function formatVerifyResult(result) {
   if (result.cleared) {
-    return 'Key cleared — Free (Snapshot) restored.';
+    return 'Key cleared — Free (Early Access) restored.';
   }
   if (result.valid) {
     const label = RedzeUXHybrid?.LABELS?.[result.tier] || result.tier;
     if (result.source === 'server_verify') {
-      return `${label} verified. Paid capabilities unlocked.`;
+      return `${label} verified. Watermark removed on briefs and exports.`;
     }
     if (result.source === 'dev') {
       return `${label} dev key active.`;
@@ -52,7 +52,7 @@ function formatVerifyResult(result) {
     return 'Could not reach license server. Check billing-config.js.';
   }
   if (result.error === 'invalid_format') {
-    return 'Use RZX-PRO-… (subscription) or RZX-AGENCY-… (kit).';
+    return 'Use RZX-PRO-… (Supporter subscription).';
   }
   return 'Key inactive or not found.';
 }
@@ -76,17 +76,18 @@ function configureStripeButton() {
   stripeHint.classList.toggle('hidden', Boolean(link));
 }
 
-function configureAgencyContact() {
-  const email = RedzeUXBilling?.agencySalesEmail || 'support@redzeux.local';
-  agencyContact.textContent = `Agency kit inquiries: ${email}`;
+function configureSupporterHeading() {
+  if (!supporterHeading || !globalThis.RedzeUXHybrid?.formatSupporterPrice) return;
+  supporterHeading.textContent = `Supporter (${RedzeUXHybrid.formatSupporterPrice()})`;
 }
 
 function configureProGuarantee() {
   if (!proGuarantee || !globalThis.RedzeUXBilling?.formatProGuaranteeSummary) return;
   proGuarantee.textContent = RedzeUXBilling.formatProGuaranteeSummary();
-  if (proRefundExample && RedzeUXBilling.formatProRefundExample) {
-    const monthly = RedzeUXBilling.formatProRefundExample(24);
-    const annual = RedzeUXBilling.formatProRefundExample(199);
+  if (proRefundExample && RedzeUXBilling.formatProRefundExample && RedzeUXHybrid?.PRICING?.pro) {
+    const { monthlyUsd, annualUsd } = RedzeUXHybrid.PRICING.pro;
+    const monthly = RedzeUXBilling.formatProRefundExample(monthlyUsd);
+    const annual = RedzeUXBilling.formatProRefundExample(annualUsd);
     proRefundExample.textContent = `${monthly} ${annual}`;
   }
 }
@@ -100,8 +101,8 @@ async function loadBrandSettings() {
 
 async function loadSettings() {
   renderHybridLanes();
+  configureSupporterHeading();
   configureStripeButton();
-  configureAgencyContact();
   configureProGuarantee();
   licenseInput.value = await RedzeUXEntitlements.getLicenseKey();
 
@@ -141,27 +142,18 @@ document.getElementById('manage-billing').addEventListener('click', async () => 
   if (!result.ok) {
     licenseMessage.textContent =
       result.error === 'pro_only'
-        ? 'Billing portal is for Pro subscriptions only. Agency uses maintenance renewal.'
+        ? 'Billing portal is for Supporter subscriptions only.'
         : 'Could not open billing portal.';
   }
-});
-
-document.getElementById('open-agency-kit').addEventListener('click', () => {
-  const url = chrome.runtime.getURL('agency/KIT.md');
-  chrome.tabs.create({ url });
 });
 
 document.getElementById('save-brand').addEventListener('click', async () => {
   if (!globalThis.RedzeUXExport) return;
   await RedzeUXExport.saveBrandSettings(brandAgency.value, brandPrepared.value);
-  brandMessage.textContent = 'Branding saved for Pro/Agency exports.';
+  brandMessage.textContent = 'Branding saved for exports.';
 });
 
-document.getElementById('save-ai').addEventListener('click', async () => {
-  if (!(await RedzeUXEntitlements.isPaid())) {
-    aiMessage.textContent = 'Remote AI requires Pro or Agency.';
-    return;
-  }
+document.getElementById('save-ai').addEventListener('click', () => {
   chrome.storage.local.set(
     {
       [AI_KEYS.aiEnabled]: aiEnabled.checked,

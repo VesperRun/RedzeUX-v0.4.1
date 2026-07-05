@@ -46,8 +46,8 @@
       ? ' plus non-recoverable payment processing fees (Stripe)'
       : '';
     return (
-      `${days}-day Pro satisfaction guarantee: approved first-payment refunds return your payment ` +
-      `minus a $${env} environmental/handling charge${stripePart}. Contact ${refundPolicy.supportEmail}.`
+      `${days}-day Supporter satisfaction guarantee: approved first-payment refunds return your payment ` +
+      `minus a $${env} environmental/handling charge${stripePart}. No exceptions. Contact ${refundPolicy.supportEmail}.`
     );
   }
 
@@ -63,7 +63,7 @@
   }
 
   globalScope.RedzeUXBilling = {
-    /** Pro — Stripe Payment Link ($24/mo or $199/yr products) */
+    /** Supporter — Stripe Payment Link ($5/mo or $39/yr products) */
     stripePaymentLink: '',
     /** POST { key } → { valid, tier, expiresAt } */
     licenseVerifyUrl: '',

@@ -1,6 +1,6 @@
 # RedzeUX + Stripe (Hybrid server)
 
-Serves **Pro** (subscription) and **Agency** (kit + maintenance) license tiers.
+Serves **Supporter** (subscription, internal tier `pro`) and **Agency** (kit + maintenance) license tiers.
 
 See **`../HYBRID-SCHEMA.md`** · **`../PRICING.md`**
 
@@ -23,13 +23,15 @@ curl -X POST https://YOUR_DOMAIN/v1/license/issue \
   -d '{"tier":"agency","email":"buyer@studio.com","maintenanceYears":1}'
 ```
 
-## Pro checkout
+## Supporter checkout
 
 Webhook `checkout.session.completed` → `RZX-PRO-*` + Resend email.
 
+Stripe products: **$5/mo** and **$39/yr** (see `../hybrid-schema.js`).
+
 Optional metadata `redzeux_tier=agency` on checkout for agency one-time products.
 
-## Pro refunds (operator)
+## Supporter refunds (operator)
 
 Policy lives in **`../billing-config.js`** → `refundPolicy.environmentalFeeUsd`.
 

@@ -135,7 +135,7 @@
     const compareSection = benchmark?.ok ? buildCompareBrief(benchmark) : '';
     let text = pageBrief + compareSection;
     if (opts.watermark) {
-      text += '\n\n— RedzeUX Free · Options → Pro for unlimited briefs & compare';
+      text += '\n\n— RedzeUX Free (early access) · Options → Supporter removes this line';
     }
     return text;
   }
