@@ -12,6 +12,8 @@ Three lanes — one engine. See **`HYBRID-SCHEMA.md`** · **`PRICING.md`**.
 
 ## Quick start
 
+**Pilots (sideload):** see **`PILOT-INSTALL.md`**
+
 1. `chrome://extensions` → Load unpacked → this folder
 2. Open panel → Analyze
 3. **Options** → Pro Stripe checkout or paste license key
