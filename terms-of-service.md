@@ -64,7 +64,5 @@ These terms may be updated. Continued use after updates constitutes acceptance o
 
 ## 11. Contact
 
-Before public release, set your support email in this file, `billing-config.js`, and the Chrome Web Store listing.
-
-- Email: support@redzeux.local *(placeholder — allowance A-010)*
+- Email: RedzeUX@proton.me
 - Refund requests: same email, subject line **Supporter refund**, include purchase email and date.

@@ -37,7 +37,7 @@ function updateTermsSupport(support, name) {
   const file = path.join(root, 'terms-of-service.md');
   if (!fs.existsSync(file) || !support) return;
   let text = fs.readFileSync(file, 'utf8');
-  text = text.replace(/support@redzeux\.local[^\n]*/, `${support} (${name})`);
+  text = text.replace(/RedzeUX@proton\.me[^\n]*/, `${support} (${name})`);
   fs.writeFileSync(file, text);
   console.log('Updated terms-of-service.md contact');
 }

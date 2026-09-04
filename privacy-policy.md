@@ -54,6 +54,4 @@ Redze UX follows transparency-first principles and is intended to align with Chr
 
 ## Contact
 
-Replace with your support contact before release:
-
-- Email: support@example.com
+- Email: RedzeUX@proton.me

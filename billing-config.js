@@ -15,7 +15,7 @@
     deductStripeProcessingFees: true,
     stripePercent: 0.029,
     stripeFixedUsd: 0.3,
-    supportEmail: 'support@redzeux.local',
+    supportEmail: 'RedzeUX@proton.me',
     /** One cash refund per customer email / Stripe customer (honor manually at launch) */
     oneRefundPerCustomer: true
   };
@@ -71,7 +71,7 @@
     billingPortalUrl: '',
     licenseCacheHours: 24,
     /** Agency lane — contact for manual kit sales */
-    agencySalesEmail: 'support@redzeux.local',
+    agencySalesEmail: 'RedzeUX@proton.me',
     agencyInfoUrl: '',
     refundPolicy,
     estimateStripeProcessingFeeUsd,

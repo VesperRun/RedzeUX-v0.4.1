@@ -21,7 +21,7 @@ Governed by **Philosophia Vesperi** · Prisma Narcissi · Galvenais Rule.
 | A-007 | Remote BYOK AI gated to Pro | Application | Optional layer; local fallback always available | v0.4 |
 | A-008 | Internal `ObserveUX*` / `OBSERVEUX_*` code names | Private canon | §IX public vs private naming; user sees “Redze UX” only | Rename sprint |
 | A-009 | Generated PNG icons (not final brand) | Application | Store-ready minimum; not product identity | Brand pass |
-| A-010 | Support contact `support@redzeux.local` placeholder | Application | Replace before public Store listing | Pre-Store |
+| A-010 | Support contact `RedzeUX@proton.me` | Application | Live operator inbox | 2026-09 |
 | A-011 | Stripe webhook + `/v1/license/verify` (minimal server in `stripe/`) | Application | Revenue without Core pollution; secrets stay on server | First paid customer |
 | A-012 | Offline pattern fallback when `licenseVerifyUrl` empty | Application | Dev / pre-Stripe testing | Until verify URL live |
 | A-014 | Resend checkout email (key only, no DOM) | Application | Fulfillment; optional until RESEND_API_KEY set | Production |
