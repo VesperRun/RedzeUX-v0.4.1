@@ -14,6 +14,10 @@ RedzeUX is a **local-first** Chrome extension: visible UI pattern detection, com
 - The **RedzeUX project folder** (unzipped), with `manifest.json` at the top level
 - **Developer mode** enabled in Chrome (one-time, for sideload only)
 
+**Operator — package for pilots:** from repo root, run `powershell -ExecutionPolicy Bypass -File scripts/package-pilot.ps1` → sends `dist/RedzeUX-v{version}-pilot.zip`.
+
+**Developer — load from source:** use the repo folder directly (no zip needed).
+
 ---
 
 ## Install (load unpacked)

@@ -32,4 +32,10 @@ Three lanes — one engine. See **`HYBRID-SCHEMA.md`** · **`PRICING.md`**.
 
 **0.4.1** — Hybrid schema (free · pro · agency)
 
+## License
+
+Copyright (c) 2026 VesperRun. All rights reserved.
+
+RedzeUX is **not** free software. See [`LICENSE`](LICENSE). Chrome Web Store use and paid keys (Pro / Agency) are product access. They do not grant a right to fork or republish the code or brand.
+
 _For the people · Local only · Always._
