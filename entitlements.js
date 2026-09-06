@@ -184,16 +184,23 @@
     return Date.now() - new Date(verifiedAt).getTime() <= maxAgeMs;
   }
 
+  function proBonoPopuli() {
+    return Boolean(hybrid().PRO_BONO_POPULI);
+  }
+
+  function preLaunchGatesOpen() {
+    if (proBonoPopuli()) return true;
+    return Boolean(hybrid().PRE_LAUNCH_GATES_OPEN);
+  }
+
   async function getTier() {
+    if (proBonoPopuli()) return 'pro_bono_populi';
     if (!(await isLicenseValid())) return TIERS().FREE;
     return getStoredTier();
   }
 
-  function preLaunchGatesOpen() {
-    return Boolean(hybrid().PRE_LAUNCH_GATES_OPEN);
-  }
-
   async function isPaid() {
+    if (proBonoPopuli()) return false;
     const tier = await getTier();
     return tier === TIERS().PRO || tier === TIERS().AGENCY;
   }
@@ -207,7 +214,7 @@
   }
 
   async function hasCapability(cap) {
-    if (preLaunchGatesOpen()) return true;
+    if (proBonoPopuli() || preLaunchGatesOpen()) return true;
     const caps = hybrid().CAPABILITIES || {};
     const allowed = caps[cap];
     if (!Array.isArray(allowed)) return false;
@@ -216,6 +223,7 @@
   }
 
   async function getTierLabel() {
+    if (proBonoPopuli()) return 'Pro Bono Populi (for the people)';
     const labels = hybrid().LABELS || {};
     return labels[await getTier()] || 'Free (Snapshot)';
   }
@@ -236,7 +244,7 @@
   }
 
   async function shouldApplyBriefWatermark() {
-    if (preLaunchGatesOpen()) return false;
+    if (proBonoPopuli() || preLaunchGatesOpen()) return false;
     return !(await isPaid());
   }
 
@@ -253,9 +261,8 @@
   }
 
   async function canCopyBrief() {
-    if (preLaunchGatesOpen()) {
-      const tier = await getTier();
-      return { ok: true, remaining: Infinity, tier };
+    if (proBonoPopuli() || preLaunchGatesOpen()) {
+      return { ok: true, remaining: Infinity, tier: 'pro_bono_populi' };
     }
 
     if (await hasCapability('unlimitedBriefs')) {
@@ -288,7 +295,7 @@
   }
 
   async function recordBriefCopy() {
-    if (preLaunchGatesOpen()) return;
+    if (proBonoPopuli() || preLaunchGatesOpen()) return;
     if (await hasCapability('unlimitedBriefs')) return;
 
     const today = new Date().toISOString().slice(0, 10);
@@ -362,6 +369,7 @@
     isAgency,
     isLicenseValid,
     preLaunchGatesOpen,
+    proBonoPopuli,
     hasCapability,
     getTierLabel,
     shouldApplyBriefWatermark,

@@ -17,8 +17,13 @@
   globalScope.RedzeUXHybrid = {
     TIERS,
     /**
-     * Pre-launch testing: all user-facing gates open, no brief/export watermarks.
-     * Set to false before public launch, then tighten CAPABILITIES as needed.
+     * Pro Bono Populi — Vesper command (2026-09-06).
+     * Full tool for the people · GPL-3.0 · no tiering, keys, watermarks, or revenue gates.
+     * Supersedes PRE_LAUNCH_GATES_OPEN and proprietary Application pricing.
+     */
+    PRO_BONO_POPULI: true,
+    /**
+     * Legacy pre-launch flag; ignored when PRO_BONO_POPULI is true.
      */
     PRE_LAUNCH_GATES_OPEN: true,
     LABELS: {
@@ -50,6 +55,15 @@
       return `$${p.monthlyUsd}/mo · $${p.annualUsd}/yr`;
     },
     laneSummary(options) {
+      if (this.PRO_BONO_POPULI) {
+        return [
+          {
+            id: 'pro_bono_populi',
+            label: 'Pro Bono Populi',
+            price: 'Full tool · GPL-3.0 · for the better of the people'
+          }
+        ];
+      }
       const opts = options || {};
       const lanes = [
         { id: TIERS.FREE, label: this.LABELS[TIERS.FREE], price: '$0 — full tool during early access' },

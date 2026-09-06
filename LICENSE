@@ -1,12 +1,21 @@
-Copyright (c) 2026 VesperRun. All rights reserved.
+RedzeUX — Pro Bono Populi build
+(for the better of the people)
 
-You may not copy, modify, distribute, or use this software or its assets
-(including name, branding, and icon art) without explicit written permission
-from the copyright holder, except as required for normal use of the published
-Chrome extension through the Chrome Web Store.
+Copyright (C) 2026 VesperRun
 
-This repository is provided for transparency and documentation. No license
-is granted to fork or republish the code as your own product.
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-Paid Supporter and Agency keys grant product entitlements only. They do not
-grant a right to copy, fork, or republish the source.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+The full GPLv3 text is included in licenses/GPL-3.0.txt.
+
+Designation: Vesper command · 2026-09-06 · see PRO-BONO-POPULI.txt

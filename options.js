@@ -59,9 +59,11 @@ function formatVerifyResult(result) {
 
 async function refreshTierStatus() {
   const label = await RedzeUXEntitlements.getTierLabel();
-  tierStatus.textContent = RedzeUXEntitlements.preLaunchGatesOpen()
-    ? `${label} · all features unlocked (pre-launch testing)`
-    : label;
+  tierStatus.textContent = RedzeUXEntitlements.proBonoPopuli?.()
+    ? label
+    : RedzeUXEntitlements.preLaunchGatesOpen()
+      ? `${label} · all features unlocked (pre-launch testing)`
+      : label;
 
   const isProTier = await RedzeUXEntitlements.isPro();
   const portalConfigured = Boolean(RedzeUXEntitlements.getBillingPortalUrl());
@@ -101,8 +103,16 @@ async function loadBrandSettings() {
   brandPrepared.value = brand.preparedFor || '';
 }
 
+function applyProBonoUi() {
+  if (!globalThis.RedzeUXHybrid?.PRO_BONO_POPULI) return;
+  ['monetization-supporter', 'monetization-license'].forEach((id) => {
+    document.getElementById(id)?.classList.add('hidden');
+  });
+}
+
 async function loadSettings() {
   renderHybridLanes();
+  applyProBonoUi();
   configureSupporterHeading();
   configureStripeButton();
   configureProGuarantee();

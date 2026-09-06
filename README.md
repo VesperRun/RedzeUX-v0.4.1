@@ -1,14 +1,8 @@
-# Redze UX (Manifest V3) — Hybrid
+# Redze UX (Manifest V3)
 
 **RedzeUX suggests. You synthesize. You decide.**
 
-Three lanes — one engine. See **`HYBRID-SCHEMA.md`** · **`PRICING.md`**.
-
-| Lane | Price | Key |
-|------|-------|-----|
-| **Free (Early Access)** | $0 | — |
-| **Supporter** | $5/mo · $39/yr | `RZX-PRO-*` |
-| **Agency (Kit)** | $1,299 + $299/yr | `RZX-AGENCY-*` |
+**Pro Bono Populi** — full tool · **GPL-3.0** · for the better of the people.
 
 ## Quick start
 
@@ -16,7 +10,7 @@ Three lanes — one engine. See **`HYBRID-SCHEMA.md`** · **`PRICING.md`**.
 2. Open any **https** page → toolbar icon → **Open Panel** → **Generate UX Snapshot**
 3. **Copy Brief** or **Compare Competitors** (open competitor tabs first)
 
-During early-access pilots the **full tool is unlocked** — no license key required.
+No account · no license key · no watermark.
 
 ## Architecture
 
@@ -25,17 +19,15 @@ During early-access pilots the **full tool is unlocked** — no license key requ
 | **Core** | `dom-detector.js`, `heuristic-engine.js`, `feature-taxonomy.js` |
 | **Hybrid (Application)** | `hybrid-schema.js`, `entitlements.js`, `billing-config.js` |
 | **Deliverables** | `brief-builder.js`, `export-report.js`, `floating-panel.js` |
-| **Pro server** | `stripe/` |
-| **Agency kit** | `agency/KIT.md`, `scripts/white-label.mjs` |
+
+See **`HYBRID-SCHEMA.md`** · **`PRICING.md`** (historical tier notes; this build is Pro Bono Populi).
 
 ## Version
 
-**0.4.1** — Early access pilots (full tool unlocked)
+**0.4.1** — Pro Bono Populi (GPL-3.0)
 
 ## License
 
-Copyright (c) 2026 VesperRun. All rights reserved.
-
-RedzeUX is **not** free software. See [`LICENSE`](LICENSE). Chrome Web Store use and paid keys (Pro / Agency) are product access. They do not grant a right to fork or republish the code or brand.
+**GPL-3.0** — Pro Bono Populi build. See [`LICENSE`](LICENSE) and [`licenses/GPL-3.0.txt`](licenses/GPL-3.0.txt). Designation: [`PRO-BONO-POPULI.txt`](PRO-BONO-POPULI.txt).
 
 _For the people · Local only · Always._

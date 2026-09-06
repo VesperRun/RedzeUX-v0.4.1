@@ -535,7 +535,7 @@
     const exportLock = panel.querySelector('#observeux-export-lock');
     const copyBtn = panel.querySelector('#observeux-copy-brief');
 
-    if (entitlements.preLaunchGatesOpen()) {
+    if (entitlements.proBonoPopuli?.() || entitlements.preLaunchGatesOpen()) {
       compareCard?.classList.remove('observeux-pro-locked');
       exportCard?.classList.remove('observeux-pro-locked');
       compareLock?.classList.add('hidden');

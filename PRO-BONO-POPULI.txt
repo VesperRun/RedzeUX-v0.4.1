@@ -1,0 +1,16 @@
+RedzeUX — Pro Bono Populi designation
+======================================
+
+Status: ACTIVE (Vesper command · 2026-09-06)
+License: GPL-3.0 (see LICENSE and licenses/GPL-3.0.txt)
+
+This build is designated Pro Bono Populi (for the better of the people).
+
+  - Full tool for everyone — no free tier, Supporter, Agency, or license keys
+  - No brief or export watermarks
+  - No revenue or entitlement mechanics on this artifact
+  - Source and license travel with the package
+
+Governed by Philosophia Vesperi §XI (local canon).
+
+_For the people · Local only · Always._
