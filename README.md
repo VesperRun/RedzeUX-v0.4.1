@@ -12,8 +12,6 @@ Three lanes — one engine. See **`HYBRID-SCHEMA.md`** · **`PRICING.md`**.
 
 ## Quick start
 
-**Pilots (sideload):** see **`PILOT-INSTALL.md`**
-
 1. `chrome://extensions` → Load unpacked → this folder
 2. Open any **https** page → toolbar icon → **Open Panel** → **Generate UX Snapshot**
 3. **Copy Brief** or **Compare Competitors** (open competitor tabs first)
