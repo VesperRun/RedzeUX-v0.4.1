@@ -6,8 +6,8 @@ Three lanes — one engine. See **`HYBRID-SCHEMA.md`** · **`PRICING.md`**.
 
 | Lane | Price | Key |
 |------|-------|-----|
-| **Free (Snapshot)** | $0 | — |
-| **Pro (Teardown)** | $24/mo · $199/yr | `RZX-PRO-*` |
+| **Free (Early Access)** | $0 | — |
+| **Supporter** | $5/mo · $39/yr | `RZX-PRO-*` |
 | **Agency (Kit)** | $1,299 + $299/yr | `RZX-AGENCY-*` |
 
 ## Quick start
@@ -15,8 +15,10 @@ Three lanes — one engine. See **`HYBRID-SCHEMA.md`** · **`PRICING.md`**.
 **Pilots (sideload):** see **`PILOT-INSTALL.md`**
 
 1. `chrome://extensions` → Load unpacked → this folder
-2. Open panel → Analyze
-3. **Options** → Pro Stripe checkout or paste license key
+2. Open any **https** page → toolbar icon → **Open Panel** → **Generate UX Snapshot**
+3. **Copy Brief** or **Compare Competitors** (open competitor tabs first)
+
+During early-access pilots the **full tool is unlocked** — no license key required.
 
 ## Architecture
 
@@ -30,7 +32,7 @@ Three lanes — one engine. See **`HYBRID-SCHEMA.md`** · **`PRICING.md`**.
 
 ## Version
 
-**0.4.1** — Hybrid schema (free · pro · agency)
+**0.4.1** — Early access pilots (full tool unlocked)
 
 ## License
 

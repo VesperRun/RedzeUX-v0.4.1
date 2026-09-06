@@ -54,6 +54,20 @@ During early-access pilots, the **full tool is unlocked**. Optional **Supporter*
 
 Optional **remote AI (BYOK):** off by default; local heuristic suggestions only unless you configure an endpoint and key.
 
+**Branding (optional):** Options → set agency/client name for exports.
+
+---
+
+## Troubleshooting
+
+| Problem | Fix |
+|---------|-----|
+| **Compare failed or empty results** | Open each competitor URL in its **own tab**. Click each tab once so the page loads, then Compare again. |
+| **Panel won't open** | Reload the extension at `chrome://extensions` (circular arrow). Refresh the page. |
+| **Nothing happens on a page** | RedzeUX works on **https** sites. Not on `chrome://`, the Web Store, or most `file://` pages. |
+| **Chrome warns about broad access** | Expected — RedzeUX reads **visible UI** on pages you open for analysis. Nothing uploads by default. |
+| **Copy Brief didn't paste** | Some sites block clipboard — try **Export** (.md) from the panel instead. |
+
 ---
 
 ## Updates during the pilot
