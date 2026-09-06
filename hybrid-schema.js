@@ -18,8 +18,8 @@
     TIERS,
     /**
      * Pro Bono Populi — Vesper command (2026-09-06).
-     * Full tool for the people · GPL-3.0 · no tiering, keys, watermarks, or revenue gates.
-     * Supersedes PRE_LAUNCH_GATES_OPEN and proprietary Application pricing.
+     * When true on this build: full tool · GPL-3.0 · no tiering, keys, watermarks, or revenue gates.
+     * When false: proprietary path — see LICENSE-PROPRIETARY.txt · PRICING.md · §XI canon.
      */
     PRO_BONO_POPULI: true,
     /**

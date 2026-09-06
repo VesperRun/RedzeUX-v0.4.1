@@ -13,4 +13,8 @@ This build is designated Pro Bono Populi (for the better of the people).
 
 Governed by Philosophia Vesperi §XI (local canon).
 
+Proprietary builds: set `PRO_BONO_POPULI: false` in `hybrid-schema.js` and apply
+LICENSE-PROPRIETARY.txt to that artifact. This designation does not remove that path
+from the codebase.
+
 _For the people · Local only · Always._

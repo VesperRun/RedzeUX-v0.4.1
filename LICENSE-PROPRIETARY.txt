@@ -1,0 +1,18 @@
+RedzeUX — Default proprietary license (VesperRun builds)
+============================================================
+
+Use this license when PRO_BONO_POPULI is false and Vesper has not named
+the artifact Pro Bono Populi. See Philosophia Vesperi §XI (local canon).
+
+Copyright (c) 2026 VesperRun. All rights reserved.
+
+You may not copy, modify, distribute, or use this software or its assets
+(including name, branding, and icon art) without explicit written permission
+from the copyright holder, except as required for normal use of the published
+Chrome extension through the Chrome Web Store.
+
+This repository is provided for transparency and documentation. No license
+is granted to fork or republish the code as your own product.
+
+Paid Supporter and Agency keys grant product entitlements only. They do not
+grant a right to copy, fork, or republish the source.

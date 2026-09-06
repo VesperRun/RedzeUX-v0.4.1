@@ -28,6 +28,10 @@ See **`HYBRID-SCHEMA.md`** · **`PRICING.md`** (historical tier notes; this buil
 
 ## License
 
-**GPL-3.0** — Pro Bono Populi build. See [`LICENSE`](LICENSE) and [`licenses/GPL-3.0.txt`](licenses/GPL-3.0.txt). Designation: [`PRO-BONO-POPULI.txt`](PRO-BONO-POPULI.txt).
+**This build (active):** Pro Bono Populi · **GPL-3.0**. See [`LICENSE`](LICENSE), [`licenses/GPL-3.0.txt`](licenses/GPL-3.0.txt), [`PRO-BONO-POPULI.txt`](PRO-BONO-POPULI.txt).
+
+**Other VesperRun builds (when `PRO_BONO_POPULI` is false):** proprietary · [`LICENSE-PROPRIETARY.txt`](LICENSE-PROPRIETARY.txt).
+
+Tier/Stripe code remains in the tree for that path — not removed.
 
 _For the people · Local only · Always._
