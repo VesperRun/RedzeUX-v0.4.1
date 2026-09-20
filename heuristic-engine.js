@@ -1,5 +1,6 @@
 // heuristic-engine.js
 // Converts observable facts into bounded heuristics with plain-language labels and category benchmarks.
+// VesperRun shared Core — ObserveUXHeuristicEngine. Proprietary RedzeUX build.
 
 (function initHeuristicEngine(globalScope) {
   function getTaxonomy() {

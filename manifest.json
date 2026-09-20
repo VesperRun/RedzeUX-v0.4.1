@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Redze UX - Privacy-First UX Snapshots",
-  "description": "Pro Bono Populi — local-first competitive UX snapshots · GPL-3.0 · full tool for the people.",
+  "description": "VesperRun — local-first competitive UX snapshots · proprietary · full tool during early access.",
   "version": "0.4.1",
   "action": {
     "default_title": "Redze UX",

@@ -1,5 +1,6 @@
 // dom-detector.js
 // Observable visible UI detection (light DOM + bounded open shadow roots only).
+// VesperRun shared Core — ObserveUXDomDetector. Proprietary RedzeUX build.
 
 (function initDomDetector(globalScope) {
   const SELECTORS = {

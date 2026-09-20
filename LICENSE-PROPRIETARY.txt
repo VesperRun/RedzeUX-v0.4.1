@@ -1,8 +1,7 @@
 RedzeUX — Default proprietary license (VesperRun builds)
 ============================================================
 
-Use this license when PRO_BONO_POPULI is false and Vesper has not named
-the artifact Pro Bono Populi. See Philosophia Vesperi §XI (local canon).
+Active license for this build (PRO_BONO_POPULI: false). See Philosophia Vesperi §XI (local canon).
 
 Copyright (c) 2026 VesperRun. All rights reserved.
 
@@ -16,3 +15,5 @@ is granted to fork or republish the code as your own product.
 
 Paid Supporter and Agency keys grant product entitlements only. They do not
 grant a right to copy, fork, or republish the source.
+
+Prior public GPL releases: see LICENSE (prior public GPL releases section).

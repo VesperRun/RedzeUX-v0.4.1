@@ -1,20 +1,24 @@
 RedzeUX — Pro Bono Populi designation
 ======================================
 
-Status: ACTIVE (Vesper command · 2026-09-06)
-License: GPL-3.0 (see LICENSE and licenses/GPL-3.0.txt)
+Status: NOT ACTIVE (withdrawn · Vesper command · 2026-09-20)
 
-This build is designated Pro Bono Populi (for the better of the people).
+This artifact is proprietary (VesperRun). See LICENSE and LICENSE-PROPRIETARY.txt.
 
-  - Full tool for everyone — no free tier, Supporter, Agency, or license keys
-  - No brief or export watermarks
-  - No revenue or entitlement mechanics on this artifact
-  - Source and license travel with the package
+History:
+  - ACTIVE 2026-09-06 on the public GitHub repo under GPL-3.0 (Pro Bono Populi).
+  - Withdrawn 2026-09-20: public GPL allowed third parties to monetize or republish
+    published source; VesperRun cannot undo rights already granted on those releases.
+  - Going forward: new commits are proprietary. Prior published GPL commits/tags
+    remain GPL-3.0 for copies obtained from those releases.
 
-Governed by Philosophia Vesperi §XI (local canon).
+Pro Bono Populi applies only when Vesper explicitly names a **public** repo or
+published Store artifact under GPL-3. RedzeUX is not currently designated.
 
-Proprietary builds: set `PRO_BONO_POPULI: false` in `hybrid-schema.js` and apply
-LICENSE-PROPRIETARY.txt to that artifact. This designation does not remove that path
-from the codebase.
+The product may still be free to use, local-first, and full-featured during
+early access — that is product policy, not a GPL grant on new proprietary commits.
 
-_For the people · Local only · Always._
+Operator may later use a private repo, Store-only binary, or a clean repo history
+after VP — see README. Editing LICENSE alone does not erase GitHub forks of GPL-era commits.
+
+_For the people · Local only · VesperRun_

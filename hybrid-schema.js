@@ -1,5 +1,5 @@
 // hybrid-schema.js — Single source of truth for hybrid tiers (Application layer).
-// Launch: generous Free (early access) · Supporter subscription. See PRICING.md.
+// Active build: proprietary (VesperRun). Pro Bono Populi path retained, not active.
 
 (function initHybridSchema(globalScope) {
   const TIERS = {
@@ -21,10 +21,8 @@
      * When true on this build: full tool · GPL-3.0 · no tiering, keys, watermarks, or revenue gates.
      * When false: proprietary path — see LICENSE-PROPRIETARY.txt · PRICING.md · §XI canon.
      */
-    PRO_BONO_POPULI: true,
-    /**
-     * Legacy pre-launch flag; ignored when PRO_BONO_POPULI is true.
-     */
+    PRO_BONO_POPULI: false,
+    /** Full tool, no watermarks, no keys — until operator closes gates before launch. */
     PRE_LAUNCH_GATES_OPEN: true,
     LABELS: {
       [TIERS.FREE]: 'Free (Early Access)',

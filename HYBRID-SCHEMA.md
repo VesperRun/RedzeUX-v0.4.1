@@ -2,6 +2,15 @@
 
 Technical contract for RedzeUX tiers. Product copy lives in **`PRICING.md`**.
 
+## Flags
+
+| Flag | File | This build |
+|------|------|------------|
+| `PRO_BONO_POPULI` | `hybrid-schema.js` → `RedzeUXHybrid` | **false** — proprietary (VesperRun) |
+| `PRE_LAUNCH_GATES_OPEN` | same | **true** — full tool, no watermarks during early access |
+
+When `PRO_BONO_POPULI` is true, entitlements bypass tier gates and GPL Pro Bono copy applies — **not active** (see `PRO-BONO-POPULI.txt`). When false, `PRE_LAUNCH_GATES_OPEN` may unlock all user-facing gates until launch. Do not delete tier/billing bridge code.
+
 ## Tiers
 
 | ID | Key prefix | Sales motion |

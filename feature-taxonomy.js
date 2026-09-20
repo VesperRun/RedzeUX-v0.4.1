@@ -1,5 +1,6 @@
 // feature-taxonomy.js
 // Shared UX feature labels and category expectations (competitive benchmark baseline).
+// VesperRun shared Core — ObserveUXFeatureTaxonomy. Proprietary RedzeUX build.
 
 (function initFeatureTaxonomy(globalScope) {
   const FEATURE_LABELS = {

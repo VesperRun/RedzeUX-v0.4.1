@@ -1,21 +1,27 @@
-RedzeUX — Pro Bono Populi build
-(for the better of the people)
+RedzeUX — Proprietary license (VesperRun)
+==========================================
 
-Copyright (C) 2026 VesperRun
+Copyright (c) 2026 VesperRun. All rights reserved.
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+You may not copy, modify, distribute, or use this software or its assets
+(including name, branding, and icon art) without explicit written permission
+from the copyright holder, except as required for normal use of the published
+Chrome extension through the Chrome Web Store when VesperRun publishes it there.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+This repository may be public or private for operator transparency. No license
+is granted to fork, republish, or sell this source as your own product.
 
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+Product entitlements (if any) grant use of the published extension only. They
+do not grant a right to copy, fork, or republish the source.
 
-The full GPLv3 text is included in licenses/GPL-3.0.txt.
+Prior public GPL releases
+-------------------------
+RedzeUX was previously designated Pro Bono Populi (GPL-3.0) on the public GitHub
+repo. **Commits and tags published under that designation remain available under
+GPL-3.0 to the extent already released** — this LICENSE file does not revoke
+rights on copies lawfully obtained from those releases. **New commits after the
+2026-09-20 proprietary withdrawal** are proprietary (VesperRun). Forks of older
+GPL commits remain governed by GPL-3.0 for those snapshots only.
 
-Designation: Vesper command · 2026-09-06 · see PRO-BONO-POPULI.txt
+See LICENSE-PROPRIETARY.txt (same terms). licenses/GPL-3.0.txt is retained
+for reference and for prior public releases — not the active license for new work.
